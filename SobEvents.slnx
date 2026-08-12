@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SobEvents.Api/SobEvents.Api.csproj" />
+  <Project Path="SobEvents.Application/SobEvents.Application.csproj" />
+  <Project Path="SobEvents.Domain/SobEvents.Domain.csproj" />
+  <Project Path="SobEvents.Infrastructure/SobEvents.Infrastructure.csproj" />
+</Solution>
