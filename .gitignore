@@ -480,3 +480,59 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+## Professional .NET / Visual Studio Gitignore
+
+# Shareable user settings
+IdentityService.UserSecrets.json
+
+# Input to MSBuild
+*.user
+*.userosscache
+*.sln.docstates
+
+# Tasks development & runtime
+*.tasks
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.pdb
+*.dll.config
+*.cache
+*.rsp
+
+# Core Build Results
+[Bb]in/
+[Oo]bj/
+
+# ODB / EF Core Migrations Tooling
+*.exe
+*.node
+.mdf
+.ldf
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/code-workspace
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# AppSettings secrets / environment adjustments
+appsettings.Development.json
