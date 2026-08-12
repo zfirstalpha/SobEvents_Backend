@@ -18,4 +18,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SobEvents.Application\SobEvents.Application.csproj" />
+    <ProjectReference Include="..\SobEvents.Infrastructure\SobEvents.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

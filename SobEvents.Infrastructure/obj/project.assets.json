@@ -264,6 +264,29 @@
             "related": ".xml"
           }
         }
+      },
+      "SobEvents.Application/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "SobEvents.Domain": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/SobEvents.Application.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SobEvents.Application.dll": {}
+        }
+      },
+      "SobEvents.Domain/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/SobEvents.Domain.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SobEvents.Domain.dll": {}
+        }
       }
     }
   },
@@ -688,11 +711,22 @@
         "npgsql.entityframeworkcore.postgresql.nuspec",
         "postgresql.png"
       ]
+    },
+    "SobEvents.Application/1.0.0": {
+      "type": "project",
+      "path": "../SobEvents.Application/SobEvents.Application.csproj",
+      "msbuildProject": "../SobEvents.Application/SobEvents.Application.csproj"
+    },
+    "SobEvents.Domain/1.0.0": {
+      "type": "project",
+      "path": "../SobEvents.Domain/SobEvents.Domain.csproj",
+      "msbuildProject": "../SobEvents.Domain/SobEvents.Domain.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net10.0": [
-      "Npgsql.EntityFrameworkCore.PostgreSQL >= 10.0.3"
+      "Npgsql.EntityFrameworkCore.PostgreSQL >= 10.0.3",
+      "SobEvents.Application >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -702,11 +736,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\HP\\Desktop\\sob-events\\SobEvents-Backend\\SobEvents.Infrastructure\\SobEvents.Infrastructure.csproj",
+      "projectUniqueName": "C:\\Users\\HP\\Desktop\\Sob-Events\\SobEvents-Backend\\SobEvents.Infrastructure\\SobEvents.Infrastructure.csproj",
       "projectName": "SobEvents.Infrastructure",
-      "projectPath": "C:\\Users\\HP\\Desktop\\sob-events\\SobEvents-Backend\\SobEvents.Infrastructure\\SobEvents.Infrastructure.csproj",
+      "projectPath": "C:\\Users\\HP\\Desktop\\Sob-Events\\SobEvents-Backend\\SobEvents.Infrastructure\\SobEvents.Infrastructure.csproj",
       "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\HP\\Desktop\\sob-events\\SobEvents-Backend\\SobEvents.Infrastructure\\obj\\",
+      "outputPath": "C:\\Users\\HP\\Desktop\\Sob-Events\\SobEvents-Backend\\SobEvents.Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -727,7 +761,11 @@
         "net10.0": {
           "framework": "net10.0",
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\HP\\Desktop\\Sob-Events\\SobEvents-Backend\\SobEvents.Application\\SobEvents.Application.csproj": {
+              "projectPath": "C:\\Users\\HP\\Desktop\\Sob-Events\\SobEvents-Backend\\SobEvents.Application\\SobEvents.Application.csproj"
+            }
+          }
         }
       },
       "warningProperties": {

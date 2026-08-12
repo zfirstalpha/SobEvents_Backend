@@ -370,7 +370,7 @@
           "Microsoft.EntityFrameworkCore.Analyzers": "10.0.11"
         },
         "compile": {
-          "lib/net10.0/_._": {
+          "lib/net10.0/Microsoft.EntityFrameworkCore.dll": {
             "related": ".xml"
           }
         },
@@ -386,7 +386,7 @@
       "Microsoft.EntityFrameworkCore.Abstractions/10.0.11": {
         "type": "package",
         "compile": {
-          "lib/net10.0/_._": {
+          "lib/net10.0/Microsoft.EntityFrameworkCore.Abstractions.dll": {
             "related": ".xml"
           }
         },
@@ -432,7 +432,7 @@
           "Microsoft.EntityFrameworkCore": "10.0.11"
         },
         "compile": {
-          "lib/net10.0/_._": {
+          "lib/net10.0/Microsoft.EntityFrameworkCore.Relational.dll": {
             "related": ".xml"
           }
         },
@@ -520,6 +520,37 @@
         },
         "runtime": {
           "lib/net6.0/Newtonsoft.Json.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Npgsql/10.0.3": {
+        "type": "package",
+        "compile": {
+          "lib/net10.0/Npgsql.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Npgsql.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Npgsql.EntityFrameworkCore.PostgreSQL/10.0.3": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "[10.0.4, 11.0.0)",
+          "Microsoft.EntityFrameworkCore.Relational": "[10.0.4, 11.0.0)",
+          "Npgsql": "10.0.3"
+        },
+        "compile": {
+          "lib/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll": {
             "related": ".xml"
           }
         }
@@ -648,6 +679,43 @@
         },
         "build": {
           "buildTransitive/net8.0/_._": {}
+        }
+      },
+      "SobEvents.Application/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "SobEvents.Domain": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/SobEvents.Application.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SobEvents.Application.dll": {}
+        }
+      },
+      "SobEvents.Domain/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "compile": {
+          "bin/placeholder/SobEvents.Domain.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SobEvents.Domain.dll": {}
+        }
+      },
+      "SobEvents.Infrastructure/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "10.0.3",
+          "SobEvents.Application": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/SobEvents.Infrastructure.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SobEvents.Infrastructure.dll": {}
         }
       }
     }
@@ -1986,6 +2054,40 @@
         "packageIcon.png"
       ]
     },
+    "Npgsql/10.0.3": {
+      "sha512": "7nb5YzXuvWWJxB0J8DiyL3we+X4FOctZrt0fIBnucOIaIevFEEwGQVZKtiu9olXdlNAK1eNgqSral6r/jlhI4w==",
+      "type": "package",
+      "path": "npgsql/10.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net10.0/Npgsql.dll",
+        "lib/net10.0/Npgsql.xml",
+        "lib/net8.0/Npgsql.dll",
+        "lib/net8.0/Npgsql.xml",
+        "lib/net9.0/Npgsql.dll",
+        "lib/net9.0/Npgsql.xml",
+        "npgsql.10.0.3.nupkg.sha512",
+        "npgsql.nuspec",
+        "postgresql.png"
+      ]
+    },
+    "Npgsql.EntityFrameworkCore.PostgreSQL/10.0.3": {
+      "sha512": "IPGrrZnRkuW7OlHDhUESZz4G5DLkW7Nej/O3Cx+0iTsgyU5XJxBgpsvTHLloo3WWuAKKbDHXBvWPVkX1deRh1Q==",
+      "type": "package",
+      "path": "npgsql.entityframeworkcore.postgresql/10.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll",
+        "lib/net10.0/Npgsql.EntityFrameworkCore.PostgreSQL.xml",
+        "npgsql.entityframeworkcore.postgresql.10.0.3.nupkg.sha512",
+        "npgsql.entityframeworkcore.postgresql.nuspec",
+        "postgresql.png"
+      ]
+    },
     "System.CodeDom/6.0.0": {
       "sha512": "CPc6tWO1LAer3IzfZufDBRL+UZQcj5uS207NHALQzP84Vp/z6wF0Aa0YZImOQY8iStY0A2zI/e3ihKNPfUm8XA==",
       "type": "package",
@@ -2171,13 +2273,30 @@
         "system.composition.typedparts.nuspec",
         "useSharedDesignerContext.txt"
       ]
+    },
+    "SobEvents.Application/1.0.0": {
+      "type": "project",
+      "path": "../SobEvents.Application/SobEvents.Application.csproj",
+      "msbuildProject": "../SobEvents.Application/SobEvents.Application.csproj"
+    },
+    "SobEvents.Domain/1.0.0": {
+      "type": "project",
+      "path": "../SobEvents.Domain/SobEvents.Domain.csproj",
+      "msbuildProject": "../SobEvents.Domain/SobEvents.Domain.csproj"
+    },
+    "SobEvents.Infrastructure/1.0.0": {
+      "type": "project",
+      "path": "../SobEvents.Infrastructure/SobEvents.Infrastructure.csproj",
+      "msbuildProject": "../SobEvents.Infrastructure/SobEvents.Infrastructure.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net10.0": [
       "Microsoft.AspNetCore.OpenApi >= 10.0.8",
       "Microsoft.EntityFrameworkCore.Design >= 10.0.11",
-      "Microsoft.EntityFrameworkCore.Tools >= 10.0.11"
+      "Microsoft.EntityFrameworkCore.Tools >= 10.0.11",
+      "SobEvents.Application >= 1.0.0",
+      "SobEvents.Infrastructure >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -2212,7 +2331,14 @@
         "net10.0": {
           "framework": "net10.0",
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\HP\\Desktop\\Sob-Events\\SobEvents-Backend\\SobEvents.Application\\SobEvents.Application.csproj": {
+              "projectPath": "C:\\Users\\HP\\Desktop\\Sob-Events\\SobEvents-Backend\\SobEvents.Application\\SobEvents.Application.csproj"
+            },
+            "C:\\Users\\HP\\Desktop\\Sob-Events\\SobEvents-Backend\\SobEvents.Infrastructure\\SobEvents.Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\HP\\Desktop\\Sob-Events\\SobEvents-Backend\\SobEvents.Infrastructure\\SobEvents.Infrastructure.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
