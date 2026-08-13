@@ -14,6 +14,24 @@ public class EventService : IEventService
         _context = context;
     }
 
+
+//map entity to dto
+    private static EventResponseDto MapToDto(Event e)
+    {
+        return new EventResponseDto(
+            e.Id,
+            e.Name,
+            e.Description??"",
+            e.StartDate,
+            e.EndDate,
+            e.Location,
+            e.ImageUrl,
+            e.Status
+        );
+    }
+
+
+//create event
     public async Task<EventResponseDto> CreateEventAsync(CreateEventRequest request, int organizerId)
     {
         //map dto to entity
@@ -36,7 +54,7 @@ public class EventService : IEventService
         return MapToDto(newEvent);
     }
 
-    // get all events
+// get all events
     public async Task<PagedResponseDto<EventResponseDto>> GetAllEventsAsync(PagedRequestDto request)
     {
         // start the query asnotracking for readonly 
@@ -50,7 +68,7 @@ public class EventService : IEventService
             || e.Location.ToLower().Contains(searchTerm)
             );
         }
-//count before skip and take
+        //count before skip and take
     var totalCount = await query.CountAsync();
     
     //sort and paginate (skip and take)
@@ -62,18 +80,16 @@ public class EventService : IEventService
     .ToListAsync();
       return new PagedResponseDto<EventResponseDto>(items, totalCount, request.Page, request.Pagesize);  
     }
-    private static EventResponseDto MapToDto(Event e)
+//get event by id
+    public async Task<EventResponseDto?>
+    GetEventByIdAsync(int id)
     {
-        return new EventResponseDto(
-            e.Id,
-            e.Name,
-            e.Description??"",
-            e.StartDate,
-            e.EndDate,
-            e.Location,
-            e.ImageUrl,
-            e.Status
-        );
+        var evt = await _context.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        if(evt == null)
+        {
+            return null;
+        }
+        return MapToDto(evt);
     }
 }
        

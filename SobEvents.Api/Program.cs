@@ -28,25 +28,6 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference(); // Draws the beautiful Scalar UI
 }
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<SobEventsDbContext>();
-    
-    // create o4ganizer if there is no user
-    if (!context.Users.Any())
-    {
-        context.Users.Add(new SobEvents.Domain.Entities.User
-        {
-            Username = "test_organizer",
-            Email = "test@gmail.com",
-            FirstName = "TestOrganizer",
-            LastName = "Org",
-            PasswordHash ="Test@123",
-            Role = "Organizer"
-        });
-        context.SaveChanges();
-    }
-}
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

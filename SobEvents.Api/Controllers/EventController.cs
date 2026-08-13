@@ -16,6 +16,9 @@ public class EventController : ControllerBase
         _eventService = eventService;
     }
 
+
+//create event
+
     [HttpPost]
     public async Task<IActionResult>CreateEvent([FromBody] CreateEventRequest request)
     {
@@ -23,10 +26,23 @@ public class EventController : ControllerBase
         return Created(string.Empty, createdEvent); //201 created
         
     }
+
+//get all events
     [HttpGet]
     public async Task<IActionResult> GetEvents([FromQuery] PagedRequestDto request)
     {
         var response = await _eventService.GetAllEventsAsync(request);
         return Ok(response); //200 ok
+    }
+//get event by id
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetEventById(int id)
+    {
+        var evt= await _eventService.GetEventByIdAsync(id);
+        if(evt==null)
+        {
+            return NotFound(new { Message = $"Event with id {id} not found" });
+        }
+        return Ok(evt);
     }
 }

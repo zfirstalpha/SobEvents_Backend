@@ -6,4 +6,5 @@ public interface IEventService
 {
     Task<EventResponseDto> CreateEventAsync(CreateEventRequest request, int organizerId);
    Task<PagedResponseDto<EventResponseDto>> GetAllEventsAsync(PagedRequestDto request);
+   Task<EventResponseDto?> GetEventByIdAsync(int id);
 }
