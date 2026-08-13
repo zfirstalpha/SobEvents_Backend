@@ -1,12 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using SobEvents.Infrastructure.Data;
+using SobEvents.Infrastructure.Services;
+using SobEvents.Application.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-
 builder.Services.AddOpenApi();
+
+// Register our Service
+builder.Services.AddScoped<IEventService, EventService>();
 
 // Add DbContext
 builder.Services.AddDbContext<SobEventsDbContext>(options =>
