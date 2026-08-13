@@ -21,23 +21,19 @@ public class EventService : IEventService
         {
             Name = request.Name,
             Description = request.Description,
-            Date = request.Date,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
             Location = request.Location,
+            ImageUrl = request.ImageUrl,
             OrganizerId = organizerId,
-            Status = "Published"
+            Status = "Draft"
 
         };
         _context.Events.Add(newEvent);
         await _context.SaveChangesAsync();
 
         // map entity back to dto to return to the frontend
-        return new EventResponseDto(
-            newEvent.Id,
-            newEvent.Name,
-            newEvent.Description,
-            newEvent.Date,
-            newEvent.Location,
-            newEvent.Status);
+        return MapToDto(newEvent);
     }
 
     // get all events
@@ -59,21 +55,26 @@ public class EventService : IEventService
     
     //sort and paginate (skip and take)
     var items = await query
-    .OrderBy(e => e.Date)
+    .OrderBy(e => e.StartDate)
     .Skip((request.Page - 1) * request.Pagesize)
     .Take(request.Pagesize)
-    .Select(e => new EventResponseDto(
-        e.Id,
-        e.Name,
-        e.Description,
-        e.Date,
-        e.Location,
-        e.Status
-    ))
+    .Select(e => MapToDto(e))
     .ToListAsync();
       return new PagedResponseDto<EventResponseDto>(items, totalCount, request.Page, request.Pagesize);  
     }
-
+    private static EventResponseDto MapToDto(Event e)
+    {
+        return new EventResponseDto(
+            e.Id,
+            e.Name,
+            e.Description??"",
+            e.StartDate,
+            e.EndDate,
+            e.Location,
+            e.ImageUrl,
+            e.Status
+        );
+    }
 }
        
         
