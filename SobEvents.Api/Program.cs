@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SobEvents.Infrastructure.Data;
 using SobEvents.Infrastructure.Services;
 using SobEvents.Application.Interfaces;
+using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -9,19 +10,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// Register our Service
-builder.Services.AddScoped<IEventService, EventService>();
+
 
 // Add DbContext
 builder.Services.AddDbContext<SobEventsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register our Service
+builder.Services.AddScoped<IEventService, EventService>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi(); // Generates the JSON blueprint
+    app.MapScalarApiReference(); // Draws the beautiful Scalar UI
 }
 
 app.UseHttpsRedirection();

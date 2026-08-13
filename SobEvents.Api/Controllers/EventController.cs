@@ -5,7 +5,7 @@ using SobEvents.Application.Interfaces;
 namespace SobEvents.Api.Controllers;
 
 [ApiController]
-[Route("api/[events]")]
+[Route("api/events")]
 
 public class EventController : ControllerBase
 {
@@ -20,13 +20,13 @@ public class EventController : ControllerBase
     public async Task<IActionResult>CreateEvent([FromBody] CreateEventRequest request)
     {
         var createdEvent= await _eventService.CreateEventAsync(request, 1); // hardcoded organizerId for now
-        return CreatedAtAction(nameof(GetEvents), new { id = createdEvent.Id },createdEvent);
+        return Created(string.Empty, createdEvent); //201 created
         
     }
     [HttpGet]
-    public async Task<IActionResult> GetEvents()
+    public async Task<IActionResult> GetEvents([FromQuery] PagedRequestDto request)
     {
-        var events = await _eventService.GetAllEventsAsync();
-        return Ok(events); //200 ok
+        var response = await _eventService.GetAllEventsAsync(request);
+        return Ok(response); //200 ok
     }
 }

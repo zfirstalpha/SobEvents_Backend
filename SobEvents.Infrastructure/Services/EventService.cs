@@ -41,21 +41,39 @@ public class EventService : IEventService
     }
 
     // get all events
-    public async Task<List<EventResponseDto>> GetAllEventsAsync()
+    public async Task<PagedResponseDto<EventResponseDto>> GetAllEventsAsync(PagedRequestDto request)
     {
-        return await _context.Events
-        .AsNoTracking()
-        .Select(e=> new EventResponseDto(
-            e.Id,
-            e.Name,
-            e.Description,
-            e.Date,
-            e.Location,
-            e.Status
-        ))
-        .ToListAsync();
-        
+        // start the query asnotracking for readonly 
+        var query = _context.Events.AsNoTracking();
+
+        //search by name or location
+        if(!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var searchTerm = request.Search.ToLower();
+            query = query.Where(e=> e.Name.ToLower().Contains(searchTerm) 
+            || e.Location.ToLower().Contains(searchTerm)
+            );
+        }
+//count before skip and take
+    var totalCount = await query.CountAsync();
+    
+    //sort and paginate (skip and take)
+    var items = await query
+    .OrderBy(e => e.Date)
+    .Skip((request.Page - 1) * request.Pagesize)
+    .Take(request.Pagesize)
+    .Select(e => new EventResponseDto(
+        e.Id,
+        e.Name,
+        e.Description,
+        e.Date,
+        e.Location,
+        e.Status
+    ))
+    .ToListAsync();
+      return new PagedResponseDto<EventResponseDto>(items, totalCount, request.Page, request.Pagesize);  
     }
+
 }
        
         
