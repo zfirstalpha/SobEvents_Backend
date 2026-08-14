@@ -16,9 +16,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<SobEventsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register our Service
+// service registrations
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
 
 var app = builder.Build();
 
