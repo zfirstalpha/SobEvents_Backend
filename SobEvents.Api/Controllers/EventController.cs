@@ -45,4 +45,36 @@ public class EventController : ControllerBase
         }
         return Ok(evt);
     }
+
+//update event
+
+[HttpPut("{id}")] 
+    public async Task<IActionResult> UpdateEvent(int id, [FromBody] CreateEventRequest request)
+    {
+        // mocking organizerId = 1 
+        var updatedEvent = await _eventService.UpdateEventAsync(id, request, 1);
+        
+        if (updatedEvent == null) 
+        {
+            return NotFound(new { message = "Event not found or you do not have permission to edit it." });
+        }
+
+        return Ok(updatedEvent);
+    }
+
+// delete event
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteEvent(int id)
+    {
+        var success = await _eventService.DeleteEventAsync(id, 1);
+        
+        if (!success) 
+        {
+            return NotFound(new { message = "Event not found or you do not have permission to delete it." });
+        }
+
+        
+        return NoContent(); 
+    }
 }

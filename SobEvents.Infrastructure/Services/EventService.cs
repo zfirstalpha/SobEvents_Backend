@@ -91,6 +91,37 @@ public class EventService : IEventService
         }
         return MapToDto(evt);
     }
+//update event
+    public async Task<EventResponseDto?> UpdateEventAsync(int id, CreateEventRequest request, int organizerId)
+    {
+        var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId);
+        if(evt == null)
+        {
+            return null;
+        }
+        evt.Name = request.Name;
+        evt.Description = request.Description;
+        evt.StartDate = request.StartDate;
+        evt.EndDate = request.EndDate;
+        evt.Location = request.Location;
+        evt.ImageUrl = request.ImageUrl;
+
+        await _context.SaveChangesAsync();
+        return MapToDto(evt);
+    }
+
+//delete event
+    public async Task<bool> DeleteEventAsync(int id, int organizerId)
+    {
+        var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId);
+        if(evt == null)
+        {
+            return false;
+        }
+        evt.IsDeleted = true;
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }
        
         
