@@ -18,6 +18,7 @@ builder.Services.AddDbContext<SobEventsDbContext>(options =>
 
 // Register our Service
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
 
 var app = builder.Build();
 
