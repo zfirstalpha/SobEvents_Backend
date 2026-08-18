@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using SobEvents.Infrastructure.Data;
+using SobEvents.Infrastructure.Persistence.Context;
 using SobEvents.Infrastructure.Services;
 using SobEvents.Application.Interfaces;
 using Scalar.AspNetCore;

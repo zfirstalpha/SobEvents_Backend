@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
 using SobEvents.Domain.Entities;
-using SobEvents.Infrastructure.Data;
 
+using SobEvents.Infrastructure.Persistence.Context;
 namespace SobEvents.Infrastructure.Services;
 
 public class EventService : IEventService

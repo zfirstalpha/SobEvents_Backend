@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 namespace SobEvents.Application.DTOs;
 
-//this is what the client will send us when creating event
+// wat the client will send us when creating event
 public record CreateEventRequest(
    [Required (ErrorMessage = "Event name is required")]
    [MaxLength(100, ErrorMessage = "Event name cannot exceed 100 characters")]
