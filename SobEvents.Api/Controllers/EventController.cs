@@ -77,4 +77,43 @@ public class EventController : ControllerBase
         
         return NoContent(); 
     }
+
+// publish event 
+    [HttpPost("{id}/publish")]
+    public async Task<IActionResult> PublishEvent(int id, CancellationToken ct)
+    {
+        var (success, errorMessage) = await _eventService.PublishEventAsync(id, 1, ct); // Mock Organizer Id 1
+
+        if (!success)
+        {
+            if (errorMessage == "Event not found or unauthorized.")
+            {
+                return NotFound(new { message = errorMessage });
+            }
+
+            //  409 Conflict for business rule violation (e.g. no tickets)
+            return Conflict(new ProblemDetails
+            {
+                Title = "Publishing Conflict",
+                Detail = errorMessage,
+                Status = StatusCodes.Status409Conflict
+            });
+        }
+
+        return NoContent(); 
+    }
+
+// cancel event
+    [HttpPost("{id}/cancel")]
+    public async Task<IActionResult> CancelEvent(int id, CancellationToken ct)
+    {
+        var success = await _eventService.CancelEventAsync(id, 1, ct); // Mock Organizer Id 1
+
+        if (!success)
+        {
+            return NotFound(new { message = "Event not found, unauthorized, or already cancelled." });
+        }
+
+        return NoContent();
+    }
 }

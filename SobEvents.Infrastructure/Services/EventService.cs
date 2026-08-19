@@ -32,7 +32,7 @@ public class EventService : IEventService
 
 
 //create event
-    public async Task<EventResponseDto> CreateEventAsync(CreateEventRequest request, int organizerId)
+    public async Task<EventResponseDto> CreateEventAsync(CreateEventRequest request, int organizerId ,CancellationToken ct)
     {
         //map dto to entity
         var newEvent = new Event
@@ -48,14 +48,14 @@ public class EventService : IEventService
 
         };
         _context.Events.Add(newEvent);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         // map entity back to dto to return to the frontend
         return MapToDto(newEvent);
     }
 
 // get all events
-    public async Task<PagedResponseDto<EventResponseDto>> GetAllEventsAsync(PagedRequestDto request)
+    public async Task<PagedResponseDto<EventResponseDto>> GetAllEventsAsync(PagedRequestDto request,CancellationToken ct)
     {
         // start the query asnotracking for readonly 
         var query = _context.Events.AsNoTracking();
@@ -77,14 +77,14 @@ public class EventService : IEventService
     .Skip((request.Page - 1) * request.Pagesize)
     .Take(request.Pagesize)
     .Select(e => MapToDto(e))
-    .ToListAsync();
+    .ToListAsync(cancellationToken: ct);
       return new PagedResponseDto<EventResponseDto>(items, totalCount, request.Page, request.Pagesize);  
     }
 //get event by id
     public async Task<EventResponseDto?>
-    GetEventByIdAsync(int id)
+    GetEventByIdAsync(int id,CancellationToken ct)
     {
-        var evt = await _context.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        var evt = await _context.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, cancellationToken: ct);
         if(evt == null)
         {
             return null;
@@ -92,9 +92,9 @@ public class EventService : IEventService
         return MapToDto(evt);
     }
 //update event
-    public async Task<EventResponseDto?> UpdateEventAsync(int id, CreateEventRequest request, int organizerId)
+    public async Task<EventResponseDto?> UpdateEventAsync(int id, CreateEventRequest request, int organizerId,CancellationToken ct)
     {
-        var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId);
+        var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId, cancellationToken: ct);
         if(evt == null)
         {
             return null;
@@ -106,20 +106,66 @@ public class EventService : IEventService
         evt.Location = request.Location;
         evt.ImageUrl = request.ImageUrl;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return MapToDto(evt);
     }
 
 //delete event
-    public async Task<bool> DeleteEventAsync(int id, int organizerId)
+    public async Task<bool> DeleteEventAsync(int id, int organizerId,CancellationToken ct)
     {
-        var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId);
+        var evt = await _context.Events.FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId, cancellationToken: ct);
         if(evt == null)
         {
             return false;
         }
         evt.IsDeleted = true;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
+        return true;
+    }
+
+//publish event 
+    public async Task<(bool Success, string? ErrorMessage)> PublishEventAsync(int id, int organizerId, CancellationToken ct = default)
+    {
+        //  fetch the event including its ticket types
+        var evt = await _context.Events
+            .Include(e => e.TicketTypes)
+            .FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId, ct);
+
+        if (evt == null)
+        {
+            return (false, "Event not found or unauthorized.");
+        }
+
+        if (evt.Status == "Published")
+        {
+            return (false, "Event is already published.");
+        }
+
+        // BUSINESS RULE: Cannot publish an event with 0 ticket types!
+        if (!evt.TicketTypes.Any(t => t.IsActive))
+        {
+            return (false, "Cannot publish an event without at least one active ticket type.");
+        }
+
+        evt.Status = "Published";
+        await _context.SaveChangesAsync(ct);
+
+        return (true, null);
+    }
+
+    public async Task<bool> CancelEventAsync(int id, int organizerId, CancellationToken ct = default)
+    {
+        var evt = await _context.Events
+            .FirstOrDefaultAsync(e => e.Id == id && e.OrganizerId == organizerId, ct);
+
+        if (evt == null || evt.Status == "Cancelled")
+        {
+            return false;
+        }
+
+        evt.Status = "Cancelled";
+        await _context.SaveChangesAsync(ct);
+
         return true;
     }
 }
