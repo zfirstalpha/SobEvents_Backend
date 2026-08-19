@@ -5,11 +5,13 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using SobEvents.Infrastructure.Data;
+
+
+using SobEvents.Infrastructure.Persistence.Context;
 
 #nullable disable
 
-namespace SobEvents.Infrastructure.Data.Migrations
+namespace SobEvents.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SobEventsDbContext))]
     [Migration("20260812140148_InitialCreate")]

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace SobEvents.Infrastructure.Data.Migrations
+namespace SobEvents.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class EnhanceEventEntity : Migration
