@@ -14,49 +14,86 @@ public class ReservationService : IReservationService
     {
         _context = context;
     }
-
-    public async Task<ReservationResult> ReserveTicketsAsync(int ticketTypeId, CreateReservationRequest request, int userId)
+//reserve ticket
+    public async Task<ReservationResult> ReserveTicketsAsync(int ticketTypeId, CreateReservationRequest request, int userId,CancellationToken ct =default)
     {
-        // 1. Fetch the Ticket Type
+        //  fetch ticket type
         var ticketType = await _context.TicketTypes
-            .FirstOrDefaultAsync(t => t.Id == ticketTypeId);
+            .FirstOrDefaultAsync(t => t.Id == ticketTypeId,ct);
 
         if (ticketType == null || !ticketType.IsActive)
         {
             return new ReservationResult(false, "Ticket type not found or is no longer active.", null);
         }
 
-        // 2. Calculate how many tickets have already been taken (Reserved or Paid)
+        // calculate how many tickets reserved or paid
         var takenTickets = await _context.Reservations
             .Where(r => r.TicketTypeId == ticketTypeId && r.Status != "Cancelled")
-            .SumAsync(r => r.Quantity);
+            .SumAsync(r => r.Quantity,ct);
 
         var availableTickets = ticketType.Quantity - takenTickets;
 
-        // 3. BUSINESS RULE: 409 Conflict Check!
+        // 3. business rule 409 conflict check
         if (request.Quantity > availableTickets)
         {
-            return new ReservationResult(false, $"Not enough tickets. Only {availableTickets} left.", null);
+            return new ReservationResult(false, $"Not enough tickets. Only {availableTickets} remaining.", null);
         }
 
-        // 4. Create the Reservation (Holds the ticket for 24 hours)
+        // create the reservation (holds the ticket for  hours)
         var reservation = new Reservation
         {
             TicketTypeId = ticketTypeId,
             UserId = userId,
             Quantity = request.Quantity,
             ReservedAt = DateTime.UtcNow,
-            ExpiryDate = DateTime.UtcNow.AddHours(1), // Background Job will use this later!
+            ExpiryDate = DateTime.UtcNow.AddHours(24), // Background job i will use this later!
             Status = "Reserved"
         };
 
         _context.Reservations.Add(reservation);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
-        var dto = new ReservationResponseDto(
-            reservation.Id, reservation.TicketTypeId, reservation.UserId, 
-            reservation.Quantity, reservation.ReservedAt, reservation.ExpiryDate, reservation.Status);
-
-        return new ReservationResult(true, null, dto);
+        return new ReservationResult(true, null, MapToDto(reservation));
     }
+//get reservation by id
+    public async Task<ReservationResponseDto?> GetReservationByIdAsync(int id, int userId, CancellationToken ct = default)
+    {
+        var reservation = await _context.Reservations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId, ct);
+
+        return reservation == null ? null : MapToDto(reservation);
+    }
+//get reservation by user id 
+     public async Task<List<ReservationResponseDto>> GetReservationsByUserAsync(int userId, CancellationToken ct = default)
+    {
+        return await _context.Reservations
+            .AsNoTracking()
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.ReservedAt)
+            .Select(r => MapToDto(r))
+            .ToListAsync(ct);
+    }
+
+//cancel reservation 
+     public async Task<bool> CancelReservationAsync(int id, int userId, CancellationToken ct = default)
+    {
+        var reservation = await _context.Reservations
+            .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId, ct);
+
+        if (reservation == null || reservation.Status == "Cancelled")
+        {
+            return false;
+        }
+
+        // marked Cancelled so the capacity is automatically freed for other attendees
+        reservation.Status = "Cancelled";
+        await _context.SaveChangesAsync(ct);
+
+        return true;
+    }
+
+//map to dto 
+     private static ReservationResponseDto MapToDto(Reservation r) =>
+        new(r.Id, r.TicketTypeId, r.UserId, r.Quantity, r.ReservedAt, r.ExpiryDate, r.Status);
 }
