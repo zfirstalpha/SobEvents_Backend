@@ -39,3 +39,13 @@ public record TicketTypeResponseDto(
     DateTime EndDate,
     bool IsActive
 );
+
+//update request dto
+public record UpdateTicketTypeRequest(
+    [Required] [MaxLength(50)] string Name,
+    [Range(0, 100000)] decimal Price,
+    [Range(1, 100000)] int Quantity,
+    [Required] DateTime StartDate,
+    [Required] DateTime EndDate,
+    bool IsActive
+);

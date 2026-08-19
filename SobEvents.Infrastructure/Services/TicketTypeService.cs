@@ -15,11 +15,12 @@ public class TicketTypeService : ITicketTypeService
         _context = context;
     }
 
-    public async Task<TicketTypeResponseDto?> CreateTicketTypeAsync(int eventId, CreateTicketTypeRequest request, int organizerId)
+//create ticket type
+    public async Task<TicketTypeResponseDto?> CreateTicketTypeAsync(int eventId, CreateTicketTypeRequest request, int organizerId, CancellationToken ct = default)
     {
         // Verify the Event exists AND belongs to this organizer
         var eventExists = await _context.Events
-            .AnyAsync(e => e.Id == eventId && e.OrganizerId == organizerId);
+            .AnyAsync(e => e.Id == eventId && e.OrganizerId == organizerId,ct);
 
         if (!eventExists) return null; 
 
@@ -36,22 +37,76 @@ public class TicketTypeService : ITicketTypeService
         };
 
         _context.TicketTypes.Add(ticketType);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
-        return new TicketTypeResponseDto(
-            ticketType.Id, ticketType.EventId, ticketType.Name, 
-            ticketType.Price, ticketType.Quantity, 
-            ticketType.StartDate, ticketType.EndDate, ticketType.IsActive);
+        return MapToDto(ticketType);
     }
 
-    public async Task<List<TicketTypeResponseDto>> GetTicketTypesByEventAsync(int eventId)
+//get ticket by event id
+    public async Task<List<TicketTypeResponseDto>> GetTicketTypesByEventAsync(int eventId, CancellationToken ct = default)
     {
         return await _context.TicketTypes
             .AsNoTracking()
             .Where(t => t.EventId == eventId)
-            .Select(t => new TicketTypeResponseDto(
-                t.Id, t.EventId, t.Name, t.Price, t.Quantity, 
-                t.StartDate, t.EndDate, t.IsActive))
+            .Select(t => MapToDto(t))
             .ToListAsync();
     }
+
+// get ticket by id
+
+    public async Task<TicketTypeResponseDto?> GetTicketTypeByIdAsync(int id, CancellationToken ct = default)
+    {
+        var ticket = await _context.TicketTypes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
+
+        return ticket == null ? null : MapToDto(ticket);
+    }
+
+     public async Task<TicketTypeResponseDto?> UpdateTicketTypeAsync(int id, UpdateTicketTypeRequest request, int organizerId, CancellationToken ct = default)
+    {
+        // must belong to an event owned by the organizer
+        var ticket = await _context.TicketTypes
+            .Include(t => t.Event)
+            .FirstOrDefaultAsync(t => t.Id == id && t.Event.OrganizerId == organizerId, ct);
+
+        if (ticket == null) return null;
+
+        ticket.Name = request.Name;
+        ticket.Price = request.Price;
+        ticket.Quantity = request.Quantity;
+        ticket.StartDate = request.StartDate;
+        ticket.EndDate = request.EndDate;
+        ticket.IsActive = request.IsActive;
+
+        await _context.SaveChangesAsync(ct);
+        return MapToDto(ticket);
+    }
+
+    public async Task<bool> DeleteTicketTypeAsync(int id, int organizerId, CancellationToken ct = default)
+    {
+        var ticket = await _context.TicketTypes
+            .Include(t => t.Event)
+            .Include(t => t.Reservations)
+            .FirstOrDefaultAsync(t => t.Id == id && t.Event.OrganizerId == organizerId, ct);
+
+        if (ticket == null) return false;
+
+        // BUSINESS DEFENSE: Cannot delete if reservations exist!
+        if (ticket.Reservations.Any(r => r.Status != "Cancelled"))
+        {
+            // Instead of deleting, deactivate it so no more people can buy
+            ticket.IsActive = false;
+            await _context.SaveChangesAsync(ct);
+            return true;
+        }
+
+        _context.TicketTypes.Remove(ticket);
+        await _context.SaveChangesAsync(ct);
+        return true;
+    }
+
+//mapper 
+     private static TicketTypeResponseDto MapToDto(TicketType t) =>
+        new(t.Id, t.EventId, t.Name, t.Price, t.Quantity, t.StartDate, t.EndDate, t.IsActive);
 }
