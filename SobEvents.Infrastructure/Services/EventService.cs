@@ -14,23 +14,6 @@ public class EventService : IEventService
         _context = context;
     }
 
-
-//map entity to dto
-    private static EventResponseDto MapToDto(Event e)
-    {
-        return new EventResponseDto(
-            e.Id,
-            e.Name,
-            e.Description??"",
-            e.StartDate,
-            e.EndDate,
-            e.Location,
-            e.ImageUrl,
-            e.Status
-        );
-    }
-
-
 //create event
     public async Task<EventResponseDto> CreateEventAsync(CreateEventRequest request, int organizerId ,CancellationToken ct)
     {
@@ -167,6 +150,33 @@ public class EventService : IEventService
         await _context.SaveChangesAsync(ct);
 
         return true;
+    }
+
+
+//map entity to dto
+    private static EventResponseDto MapToDto(Event e)
+    {
+        var links = new List<LinkDto>
+        {
+            new($"/api/events/{e.Id}","self","GET"),
+            new($"/api/events/{e.Id}/tickets","tickets","GET"),
+            new($"/api/events/{e.Id}","update","PUT"),
+            new($"/api/events/{e.Id}","delete","DELETE")
+
+        };
+
+        if (e.Status == "Draft")
+        {
+            links.Add(new($"/api/events/{e.Id}/publish","publish","POST"));
+        }
+        else if (e.Status == "Published")
+        {
+            links.Add(new($"/api/events/{e.Id}/cancel","cancel","POST"));
+        }
+
+        return new EventResponseDto(
+            e.Id, e.Name, e.Description ?? "", e.StartDate, e.EndDate, 
+            e.Location, e.ImageUrl, e.Status, links);
     }
 }
        

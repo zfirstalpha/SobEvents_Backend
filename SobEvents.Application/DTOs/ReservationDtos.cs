@@ -12,7 +12,8 @@ public record ReservationResponseDto(
     int Quantity,
     DateTime ReservedAt,
     DateTime ExpiryDate,
-    string Status
+    string Status,
+    List<LinkDto> Links  //for hateoas
 );
 
 //custom resullt so the service can tell the controller why it failed

@@ -93,7 +93,21 @@ public class ReservationService : IReservationService
         return true;
     }
 
-//map to dto 
-     private static ReservationResponseDto MapToDto(Reservation r) =>
-        new(r.Id, r.TicketTypeId, r.UserId, r.Quantity, r.ReservedAt, r.ExpiryDate, r.Status);
+//map to dto with hateoas
+     private static ReservationResponseDto MapToDto(Reservation r)
+    {
+        var links = new List<LinkDto>
+        {
+            new($"/api/reservations/{r.Id}", "self", "GET")
+        };
+
+        // CONDITIONAL LINK: Can only cancel if active
+        if (r.Status == "Reserved")
+        {
+            links.Add(new($"/api/reservations/{r.Id}", "cancel", "DELETE"));
+        }
+
+        return new ReservationResponseDto(
+            r.Id, r.TicketTypeId, r.UserId, r.Quantity, r.ReservedAt, r.ExpiryDate, r.Status, links);
+    }
 }

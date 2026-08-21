@@ -29,5 +29,6 @@ public record EventResponseDto(
     DateTime EndDate, 
     string Location, 
     string? ImageUrl,
-    string Status
+    string Status,
+    List<LinkDto> Links  //for hateoas
 );

@@ -39,17 +39,24 @@ public class TicketTypeService : ITicketTypeService
         _context.TicketTypes.Add(ticketType);
         await _context.SaveChangesAsync(ct);
 
-        return MapToDto(ticketType);
+        return MapToDto(ticketType,ticketType.Quantity);
     }
 
 //get ticket by event id
     public async Task<List<TicketTypeResponseDto>> GetTicketTypesByEventAsync(int eventId, CancellationToken ct = default)
     {
-        return await _context.TicketTypes
+        var tickets = await _context.TicketTypes
+            .Include(t => t.Reservations)
             .AsNoTracking()
             .Where(t => t.EventId == eventId)
-            .Select(t => MapToDto(t))
-            .ToListAsync();
+            .ToListAsync(ct);
+
+     return tickets.Select(t =>
+        {
+            var reservedCount = t.Reservations.Where(r => r.Status != "Cancelled").Sum(r => r.Quantity);
+            var available = t.Quantity - reservedCount;
+            return MapToDto(t, available);
+        }).ToList();
     }
 
 // get ticket by id
@@ -57,17 +64,23 @@ public class TicketTypeService : ITicketTypeService
     public async Task<TicketTypeResponseDto?> GetTicketTypeByIdAsync(int id, CancellationToken ct = default)
     {
         var ticket = await _context.TicketTypes
+            .Include(t => t.Reservations)
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id, ct);
 
-        return ticket == null ? null : MapToDto(ticket);
+        if (ticket == null) return null;
+
+        var reservedCount = ticket.Reservations.Where(r => r.Status != "Cancelled").Sum(r => r.Quantity);
+        var available = ticket.Quantity - reservedCount;
+        return MapToDto(ticket, available);
     }
 
+//update ticket type
      public async Task<TicketTypeResponseDto?> UpdateTicketTypeAsync(int id, UpdateTicketTypeRequest request, int organizerId, CancellationToken ct = default)
     {
-        // must belong to an event owned by the organizer
         var ticket = await _context.TicketTypes
             .Include(t => t.Event)
+            .Include(t => t.Reservations)
             .FirstOrDefaultAsync(t => t.Id == id && t.Event.OrganizerId == organizerId, ct);
 
         if (ticket == null) return null;
@@ -80,22 +93,23 @@ public class TicketTypeService : ITicketTypeService
         ticket.IsActive = request.IsActive;
 
         await _context.SaveChangesAsync(ct);
-        return MapToDto(ticket);
+
+        var reservedCount = ticket.Reservations.Where(r => r.Status != "Cancelled").Sum(r => r.Quantity);
+        var available = ticket.Quantity - reservedCount;
+        return MapToDto(ticket, available);
     }
 
     public async Task<bool> DeleteTicketTypeAsync(int id, int organizerId, CancellationToken ct = default)
     {
-        var ticket = await _context.TicketTypes
+         var ticket = await _context.TicketTypes
             .Include(t => t.Event)
             .Include(t => t.Reservations)
             .FirstOrDefaultAsync(t => t.Id == id && t.Event.OrganizerId == organizerId, ct);
 
         if (ticket == null) return false;
 
-        // BUSINESS DEFENSE: Cannot delete if reservations exist!
         if (ticket.Reservations.Any(r => r.Status != "Cancelled"))
         {
-            // Instead of deleting, deactivate it so no more people can buy
             ticket.IsActive = false;
             await _context.SaveChangesAsync(ct);
             return true;
@@ -104,9 +118,29 @@ public class TicketTypeService : ITicketTypeService
         _context.TicketTypes.Remove(ticket);
         await _context.SaveChangesAsync(ct);
         return true;
-    }
+        }
+
+       
+    
 
 //mapper 
-     private static TicketTypeResponseDto MapToDto(TicketType t) =>
-        new(t.Id, t.EventId, t.Name, t.Price, t.Quantity, t.StartDate, t.EndDate, t.IsActive);
+      private static TicketTypeResponseDto MapToDto(TicketType t, int availableQuantity)
+    {
+        var links = new List<LinkDto>
+        {
+            new($"/api/events/{t.EventId}/tickets/{t.Id}", "self", "GET"),
+            new($"/api/events/{t.EventId}/tickets/{t.Id}", "update", "PUT"),
+            new($"/api/events/{t.EventId}/tickets/{t.Id}", "delete", "DELETE")
+        };
+
+        // CONDITIONAL LINK: Only emit "reserve" if seats are available!
+        if (availableQuantity > 0 && t.IsActive)
+        {
+            links.Add(new($"/api/tickets/{t.Id}/reservations", "reserve", "POST"));
+        }
+
+        return new TicketTypeResponseDto(
+            t.Id, t.EventId, t.Name, t.Price, t.Quantity, availableQuantity,
+            t.StartDate, t.EndDate, t.IsActive, links);
+    }
 }

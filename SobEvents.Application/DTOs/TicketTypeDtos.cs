@@ -35,9 +35,12 @@ public record TicketTypeResponseDto(
     string Name,
     decimal Price,
     int Quantity,
+    int AvailableQuantity,
     DateTime StartDate,
     DateTime EndDate,
-    bool IsActive
+    bool IsActive,
+    List<LinkDto> Links  //for hateoas
+
 );
 
 //update request dto
