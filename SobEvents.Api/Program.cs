@@ -7,6 +7,10 @@ using SobEvents.Infrastructure.Services;
 using SobEvents.Application.Interfaces;
 using SobEvents.Api.Middlewares;
 using SobEvents.Api.Filters;
+using SobEvents.Application.Commands;
+using SobEvents.Application.Behaviors;
+using MediatR;
+using FluentValidation;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,7 +43,7 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-//centralized problemdetails & exception handling
+// problemdetails & exception handling
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
@@ -49,6 +53,19 @@ builder.Services.AddOpenApi();
 // dbcontext
 builder.Services.AddDbContext<SobEventsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<ISobEventsDbContext>(provider => 
+    provider.GetRequiredService<SobEventsDbContext>());
+
+//  Register MediatR, FluentValidation, and Pipeline Behaviors
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(CreateEventCommand).Assembly);
+    // Register the Validation Behavior pipeline globally!
+    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+});
+
+builder.Services.AddValidatorsFromAssembly(typeof(CreateEventCommand).Assembly);    
 
 // service registrations
 builder.Services.AddScoped<IEventService, EventService>();

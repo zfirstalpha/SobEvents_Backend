@@ -1,7 +1,10 @@
 using Asp.Versioning;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
+using SobEvents.Application.Commands;
+using SobEvents.Application.Queries;
 
 namespace SobEvents.Api.Controllers;
 
@@ -13,14 +16,8 @@ namespace SobEvents.Api.Controllers;
 [Route("api/v{version:apiVersion}/events")]
 [Produces("application/json")]
 
-public class EventController : ControllerBase
+public class EventsController(ISender mediator) : ControllerBase
 {
-    private readonly IEventService _eventService; 
-    
-    public EventController(IEventService eventService)
-    {
-        _eventService = eventService;
-    }
 
 
 //create event
@@ -31,11 +28,19 @@ public class EventController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult>CreateEvent([FromBody] CreateEventRequest request)
+   public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request, CancellationToken ct)
     {
-        var createdEvent= await _eventService.CreateEventAsync(request, 1); // hardcoded organizerId for now
-        return Created(string.Empty, createdEvent); //201 created
+      // 1. Map DTO to Command (Attaching mock Organizer Id 1)
+        var command = new CreateEventCommand(
+            request.Name, request.Description, request.StartDate,
+            request.EndDate, request.Location, request.ImageUrl, 1
+        );
         
+        // 2. MediatR runs FluentValidation behavior and dispatches to the Handler!
+        var createdEvent = await mediator.Send(command, ct);
+
+        return CreatedAtAction(nameof(GetEvents), new { id = createdEvent.Id }, createdEvent);
+
     }
 
 //get all events
@@ -45,10 +50,10 @@ public class EventController : ControllerBase
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResponseDto<EventResponseDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetEvents([FromQuery] PagedRequestDto request)
+   public async Task<IActionResult> GetEvents([FromQuery] PagedRequestDto request, CancellationToken ct)
     {
-        var response = await _eventService.GetAllEventsAsync(request);
-        return Ok(response); //200 ok
+        var response = await mediator.Send(new GetEventsPagedQuery(request), ct);
+        return Ok(response);
     }
 
 

@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using SobEvents.Domain.Entities;
-
+using SobEvents.Application.Interfaces;
 namespace SobEvents.Infrastructure.Persistence.Context;
 
-public class SobEventsDbContext :DbContext
+public class SobEventsDbContext :DbContext, ISobEventsDbContext
 {
     
 

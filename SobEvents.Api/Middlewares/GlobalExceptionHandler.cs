@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-
+using FluentValidation;
 namespace SobEvents.Api.Middlewares;
 
 public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
@@ -19,7 +19,33 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
             exception.Message
         );
 
-        // Standardized RFC 7807 ProblemDetails
+    if (exception is ValidationException validationException)
+        {
+            var validationErrors = validationException.Errors
+                .GroupBy(e => e.PropertyName, e => e.ErrorMessage)
+                .ToDictionary(failureGroup => failureGroup.Key, failureGroup => failureGroup.ToArray());
+
+        var validationProblemDetails = new HttpValidationProblemDetails(validationErrors)
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "One or more validation errors occurred.",
+                Type = "https://datatracker.ietf.org/doc/html/rfc7807",
+                Detail = "See the errors field for details.",
+                Instance = $"{httpContext.Request.Method} {httpContext.Request.Path}"
+            };
+
+            validationProblemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
+
+            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            httpContext.Response.ContentType = "application/problem+json";
+            await httpContext.Response.WriteAsJsonAsync(validationProblemDetails, cancellationToken);
+
+            return true;
+        }
+
+
+
+        // generic 500 internal server error
         var problemDetails = new ProblemDetails
         {
             Status = StatusCodes.Status500InternalServerError,
