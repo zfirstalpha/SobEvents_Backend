@@ -6,6 +6,7 @@ using SobEvents.Infrastructure.Persistence.SeedData;
 using SobEvents.Infrastructure.Services;
 using SobEvents.Application.Interfaces;
 using SobEvents.Api.Middlewares;
+using SobEvents.Api.Filters;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,7 +19,12 @@ builder.Host.UseDefaultServiceProvider(options =>
 });
 
 // controller service
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    //register acgion filter globally for all ocntroller
+    options.Filters.Add<AuditLogFilter>();
+}
+);
 
  //api versioning 
 builder.Services.AddApiVersioning(options =>
