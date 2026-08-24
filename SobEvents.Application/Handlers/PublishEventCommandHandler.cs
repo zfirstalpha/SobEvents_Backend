@@ -1,0 +1,26 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using SobEvents.Application.Commands;
+using SobEvents.Application.Interfaces;
+
+namespace SobEvents.Application.Handlers;
+
+public class PublishEventCommandHandler(ISobEventsDbContext context)
+    : IRequestHandler<PublishEventCommand, PublishEventResult>
+{
+    public async Task<PublishEventResult> Handle(PublishEventCommand request, CancellationToken cancellationToken)
+    {
+        var evt = await context.Events
+            .Include(e => e.TicketTypes)
+            .FirstOrDefaultAsync(e => e.Id == request.Id && e.OrganizerId == request.OrganizerId, cancellationToken);
+
+        if (evt == null) return new PublishEventResult(false, "Event not found or unauthorized.");
+        if (evt.Status == "Published") return new PublishEventResult(false, "Event is already published.");
+        if (!evt.TicketTypes.Any(t => t.IsActive)) return new PublishEventResult(false, "Cannot publish an event without at least one active ticket type.");
+
+        evt.Status = "Published";
+        await context.SaveChangesAsync(cancellationToken);
+
+        return new PublishEventResult(true, null);
+    }
+}

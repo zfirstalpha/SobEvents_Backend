@@ -30,13 +30,13 @@ public class EventsController(ISender mediator) : ControllerBase
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
    public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request, CancellationToken ct)
     {
-      // 1. Map DTO to Command (Attaching mock Organizer Id 1)
+      //  map dto to command with mock organizer id 1
         var command = new CreateEventCommand(
             request.Name, request.Description, request.StartDate,
             request.EndDate, request.Location, request.ImageUrl, 1
         );
         
-        // 2. MediatR runs FluentValidation behavior and dispatches to the Handler!
+        //  MediatR runs FluentValidation behavior and dispatches to the Handler!
         var createdEvent = await mediator.Send(command, ct);
 
         return CreatedAtAction(nameof(GetEvents), new { id = createdEvent.Id }, createdEvent);
@@ -65,13 +65,10 @@ public class EventsController(ISender mediator) : ControllerBase
     [HttpGet("{id}")]
      [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetEventById(int id)
+    public async Task<IActionResult> GetEventById(int id, CancellationToken ct)
     {
-        var evt= await _eventService.GetEventByIdAsync(id);
-        if(evt==null)
-        {
-            return NotFound(new { Message = $"Event with id {id} not found" });
-        }
+        var evt = await mediator.Send(new GetEventByIdQuery(id), ct);
+        if (evt == null) return NotFound(new ProblemDetails { Title = "Not Found", Detail = $"Event with ID {id} not found." });
         return Ok(evt);
     }
 
@@ -85,16 +82,15 @@ public class EventsController(ISender mediator) : ControllerBase
 [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateEvent(int id, [FromBody] CreateEventRequest request)
+    public async Task<IActionResult> UpdateEvent(int id, [FromBody] CreateEventRequest request, CancellationToken ct)
     {
-        // mocking organizerId = 1 
-        var updatedEvent = await _eventService.UpdateEventAsync(id, request, 1);
-        
-        if (updatedEvent == null) 
-        {
-            return NotFound(new { message = "Event not found or you do not have permission to edit it." });
-        }
+        var command = new UpdateEventCommand(
+            id, request.Name, request.Description, request.StartDate,
+            request.EndDate, request.Location, request.ImageUrl, 1 // Mock Organizer Id 1
+        );
 
+        var updatedEvent = await mediator.Send(command, ct);
+        if (updatedEvent == null) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Event not found or unauthorized." });
         return Ok(updatedEvent);
     }
 
@@ -107,17 +103,11 @@ public class EventsController(ISender mediator) : ControllerBase
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteEvent(int id)
+    public async Task<IActionResult> DeleteEvent(int id, CancellationToken ct)
     {
-        var success = await _eventService.DeleteEventAsync(id, 1);
-        
-        if (!success) 
-        {
-            return NotFound(new { message = "Event not found or you do not have permission to delete it." });
-        }
-
-        
-        return NoContent(); 
+        var success = await mediator.Send(new DeleteEventCommand(id, 1), ct);
+        if (!success) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Event not found or unauthorized." });
+        return NoContent();
     }
 
 // publish event 
@@ -132,25 +122,24 @@ public class EventsController(ISender mediator) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> PublishEvent(int id, CancellationToken ct)
     {
-        var (success, errorMessage) = await _eventService.PublishEventAsync(id, 1, ct); // Mock Organizer Id 1
+        var result = await mediator.Send(new PublishEventCommand(id, 1), ct);
 
-        if (!success)
+        if (!result.Success)
         {
-            if (errorMessage == "Event not found or unauthorized.")
+            if (result.ErrorMessage == "Event not found or unauthorized.")
             {
-                return NotFound(new { message = errorMessage });
+                return NotFound(new ProblemDetails { Title = "Not Found", Detail = result.ErrorMessage });
             }
 
-            //  409 Conflict for business rule violation (e.g. no tickets)
             return Conflict(new ProblemDetails
             {
                 Title = "Publishing Conflict",
-                Detail = errorMessage,
+                Detail = result.ErrorMessage,
                 Status = StatusCodes.Status409Conflict
             });
         }
 
-        return NoContent(); 
+        return NoContent();
     }
 
 // cancel event
@@ -164,13 +153,8 @@ public class EventsController(ISender mediator) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CancelEvent(int id, CancellationToken ct)
     {
-        var success = await _eventService.CancelEventAsync(id, 1, ct); // Mock Organizer Id 1
-
-        if (!success)
-        {
-            return NotFound(new { message = "Event not found, unauthorized, or already cancelled." });
-        }
-
+        var success = await mediator.Send(new CancelEventCommand(id, 1), ct);
+        if (!success) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Event not found or already cancelled." });
         return NoContent();
     }
 }

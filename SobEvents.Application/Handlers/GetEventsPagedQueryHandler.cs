@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SobEvents.Application.DTOs;
-using SobEvents.Application.Interfaces; // Pure Application interface!
+using SobEvents.Application.Interfaces; 
 using SobEvents.Application.Queries;
 
 namespace SobEvents.Application.Handlers;

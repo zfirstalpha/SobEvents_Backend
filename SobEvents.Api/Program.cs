@@ -68,7 +68,7 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddValidatorsFromAssembly(typeof(CreateEventCommand).Assembly);    
 
 // service registrations
-builder.Services.AddScoped<IEventService, EventService>();
+// builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 
