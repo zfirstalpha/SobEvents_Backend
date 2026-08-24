@@ -8,7 +8,7 @@ namespace SobEvents.Api.Controllers;
 /// Handles ticket reservations, concurrency checks, and booking cancellations.
 /// </summary>
 [ApiController]
-[Route("api/tickets/{ticketTypeId}/reservations")] // Nested routing
+[Route("api/v{version:apiVersion}/tickets/{ticketTypeId}/reservations")] // Nested routing
 [Produces("application/json")]
 public class ReservationsController : ControllerBase
 {
@@ -52,7 +52,7 @@ public class ReservationsController : ControllerBase
  /// <summary>
     /// Retrieves reservation confirmation details.
     /// </summary>
-    [HttpGet("api/reservations/{id}")]
+    [HttpGet("api/v{version:apiVersion}/reservations/{id}")]
     [ProducesResponseType(typeof(ReservationResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetReservationById(int id, CancellationToken ct)
@@ -73,7 +73,7 @@ public class ReservationsController : ControllerBase
     /// Retrieves all active and historical reservations for the logged-in attendee.
     /// </summary>
 
-    [HttpGet("api/reservations/my-reservations")]
+    [HttpGet("api/v{version:apiVersion}/reservations/my-reservations")]
     [ProducesResponseType(typeof(List<ReservationResponseDto>), StatusCodes.Status200OK)]
     
     public async Task<IActionResult> GetMyReservations(CancellationToken ct)
@@ -88,7 +88,7 @@ public class ReservationsController : ControllerBase
     /// Cancels an active reservation and releases ticket capacity back to the pool.
     /// </summary>
     
-    [HttpDelete("api/reservations/{id}")]
+    [HttpDelete("api/v{version:apiVersion}/reservations/{id}")]
       [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CancelReservation(int id, CancellationToken ct)

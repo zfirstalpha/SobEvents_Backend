@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
@@ -8,7 +9,8 @@ namespace SobEvents.Api.Controllers;
 /// Manages event creation, discovery, lifecycle states, and updates.
 /// </summary>
 [ApiController]
-[Route("api/events")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/events")]
 [Produces("application/json")]
 
 public class EventController : ControllerBase

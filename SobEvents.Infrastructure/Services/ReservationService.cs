@@ -98,7 +98,8 @@ public class ReservationService : IReservationService
     {
         var links = new List<LinkDto>
         {
-            new($"/api/reservations/{r.Id}", "self", "GET")
+            new($"/api/v1/reservations/{r.Id}", "self", "GET"),
+new($"/api/v1/reservations/{r.Id}", "cancel", "DELETE")
         };
 
         // CONDITIONAL LINK: Can only cancel if active

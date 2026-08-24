@@ -158,10 +158,10 @@ public class EventService : IEventService
     {
         var links = new List<LinkDto>
         {
-            new($"/api/events/{e.Id}","self","GET"),
-            new($"/api/events/{e.Id}/tickets","tickets","GET"),
-            new($"/api/events/{e.Id}","update","PUT"),
-            new($"/api/events/{e.Id}","delete","DELETE")
+            new($"/api/v1/events/{e.Id}", "self", "GET"),
+new($"/api/v1/events/{e.Id}/tickets", "tickets", "GET"),
+new($"/api/v1/events/{e.Id}", "update", "PUT"),
+new($"/api/v1/events/{e.Id}", "delete", "DELETE")
 
         };
 

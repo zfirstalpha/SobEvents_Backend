@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
@@ -8,7 +9,8 @@ namespace SobEvents.Api.Controllers;
 /// Manages ticket tiers (VIP, General) and capacity limits for events.
 /// </summary>
 [ApiController]
-[Route("api/events/{eventId}/tickets")]//nested restufull routing
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/events/{eventId}/tickets")]//nested restufull routing
 [Produces("application/json")]
 public class TicketTypesController : ControllerBase
 {

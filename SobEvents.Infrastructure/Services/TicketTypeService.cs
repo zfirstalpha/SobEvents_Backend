@@ -128,9 +128,10 @@ public class TicketTypeService : ITicketTypeService
     {
         var links = new List<LinkDto>
         {
-            new($"/api/events/{t.EventId}/tickets/{t.Id}", "self", "GET"),
-            new($"/api/events/{t.EventId}/tickets/{t.Id}", "update", "PUT"),
-            new($"/api/events/{t.EventId}/tickets/{t.Id}", "delete", "DELETE")
+            new($"/api/v1/events/{t.EventId}/tickets/{t.Id}", "self", "GET"),
+new($"/api/v1/events/{t.EventId}/tickets/{t.Id}", "update", "PUT"),
+new($"/api/v1/events/{t.EventId}/tickets/{t.Id}", "delete", "DELETE"),
+new($"/api/v1/tickets/{t.Id}/reservations", "reserve", "POST")
         };
 
         // CONDITIONAL LINK: Only emit "reserve" if seats are available!
