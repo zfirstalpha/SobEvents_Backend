@@ -2,9 +2,9 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces; 
-using SobEvents.Application.Queries;
+using SobEvents.Application.Queries.Events;
 
-namespace SobEvents.Application.Handlers;
+namespace SobEvents.Application.Handlers.Events;
 
 public class GetEventsPagedQueryHandler(ISobEventsDbContext context)
     : IRequestHandler<GetEventsPagedQuery, PagedResponseDto<EventResponseDto>>

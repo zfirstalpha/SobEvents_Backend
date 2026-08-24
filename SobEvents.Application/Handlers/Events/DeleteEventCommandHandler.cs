@@ -1,9 +1,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using SobEvents.Application.Commands;
+using SobEvents.Application.Commands.Events;
 using SobEvents.Application.Interfaces;
 
-namespace SobEvents.Application.Handlers;
+namespace SobEvents.Application.Handlers.Events;
 
 public class DeleteEventCommandHandler(ISobEventsDbContext context)
     : IRequestHandler<DeleteEventCommand, bool>

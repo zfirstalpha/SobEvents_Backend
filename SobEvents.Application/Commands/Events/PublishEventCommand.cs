@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace SobEvents.Application.Commands;
+namespace SobEvents.Application.Commands.Events;
 
 public record PublishEventResult(bool Success, string? ErrorMessage);
 

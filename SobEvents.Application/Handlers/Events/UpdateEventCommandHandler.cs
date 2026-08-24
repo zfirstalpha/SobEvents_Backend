@@ -1,21 +1,29 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using SobEvents.Application.Commands.Events;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
-using SobEvents.Application.Queries;
 
-namespace SobEvents.Application.Handlers;
+namespace SobEvents.Application.Handlers.Events;
 
-public class GetEventByIdQueryHandler(ISobEventsDbContext context) 
-    : IRequestHandler<GetEventByIdQuery, EventResponseDto?>
+public class UpdateEventCommandHandler(ISobEventsDbContext context)
+    : IRequestHandler<UpdateEventCommand, EventResponseDto?>
 {
-    public async Task<EventResponseDto?> Handle(GetEventByIdQuery request, CancellationToken cancellationToken)
+    public async Task<EventResponseDto?> Handle(UpdateEventCommand request, CancellationToken cancellationToken)
     {
         var evt = await context.Events
-            .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
+            .FirstOrDefaultAsync(e => e.Id == request.Id && e.OrganizerId == request.OrganizerId, cancellationToken);
 
         if (evt == null) return null;
+
+        evt.Name = request.Name;
+        evt.Description = request.Description;
+        evt.StartDate = request.StartDate;
+        evt.EndDate = request.EndDate;
+        evt.Location = request.Location;
+        evt.ImageUrl = request.ImageUrl;
+
+        await context.SaveChangesAsync(cancellationToken);
 
         var links = new List<LinkDto>
         {

@@ -1,10 +1,10 @@
 using MediatR;
-using SobEvents.Application.Commands;
+using SobEvents.Application.Commands.Events;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces; // Pure Application interface!
 using SobEvents.Domain.Entities;
 
-namespace SobEvents.Application.Handlers;
+namespace SobEvents.Application.Handlers.Events;
 
 public class CreateEventCommandHandler(ISobEventsDbContext context) 
     : IRequestHandler<CreateEventCommand, EventResponseDto>

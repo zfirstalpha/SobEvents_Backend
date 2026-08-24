@@ -1,7 +1,7 @@
 using FluentValidation;
-using SobEvents.Application.Commands;
+using SobEvents.Application.Commands.Events;
 
-namespace SobEvents.Application.Validators;
+namespace SobEvents.Application.Validators.Events;
 
 public class CreateEventCommandValidator : AbstractValidator<CreateEventCommand>
 {

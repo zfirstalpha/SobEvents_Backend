@@ -2,7 +2,9 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
-
+using SobEvents.Application.Commands.TicketTypes;
+using SobEvents.Application.Queries.TicketTypes;
+using MediatR;
 namespace SobEvents.Api.Controllers;
 
 /// <summary>
@@ -12,15 +14,9 @@ namespace SobEvents.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/events/{eventId}/tickets")]//nested restufull routing
 [Produces("application/json")]
-public class TicketTypesController : ControllerBase
+
+public class TicketTypesController(ISender mediator) : ControllerBase
 {
-    private readonly ITicketTypeService _ticketTypeService;
-
-    public TicketTypesController(ITicketTypeService ticketTypeService)
-    {
-        _ticketTypeService = ticketTypeService;
-    }
-
 //create a new ticket type for an event
 
     /// <summary>
@@ -31,14 +27,15 @@ public class TicketTypesController : ControllerBase
     [ProducesResponseType(typeof(TicketTypeResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CreateTicketType(int eventId, [FromBody] CreateTicketTypeRequest request, CancellationToken ct = default)
+     public async Task<IActionResult> CreateTicketType(int eventId, [FromBody] CreateTicketTypeRequest request, CancellationToken ct)
     {
-        var ticketType = await _ticketTypeService.CreateTicketTypeAsync(eventId, request, 1,ct); // Mock Organizer Id 1
-        
-        if (ticketType == null)
-        {
-            return NotFound(new { message = "Event not found or unauthorized." });
-        }
+        var command = new CreateTicketTypeCommand(
+            eventId, request.Name, request.Price, request.Quantity,
+            request.StartDate, request.EndDate, 1 // Mock Organizer Id 1
+        );
+
+        var ticketType = await mediator.Send(command, ct);
+        if (ticketType == null) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Event not found or unauthorized." });
 
         return CreatedAtAction(nameof(GetTicketTypeById), new { eventId, id = ticketType.Id }, ticketType);
     }
@@ -52,12 +49,11 @@ public class TicketTypesController : ControllerBase
 
 [HttpGet]
 [ProducesResponseType(typeof(List<TicketTypeResponseDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetTicketTypes(int eventId, CancellationToken ct = default)
+     public async Task<IActionResult> GetTicketTypes(int eventId, CancellationToken ct)
     {
-        var tickets = await _ticketTypeService.GetTicketTypesByEventAsync(eventId,ct);
+        var tickets = await mediator.Send(new GetTicketTypesByEventQuery(eventId), ct);
         return Ok(tickets);
     }
-
 //get tickettype by id
 
 /// <summary>
@@ -66,13 +62,10 @@ public class TicketTypesController : ControllerBase
  [HttpGet("{id}")]
  [ProducesResponseType(typeof(TicketTypeResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetTicketTypeById(int eventId, int id, CancellationToken ct)
+   public async Task<IActionResult> GetTicketTypeById(int eventId, int id, CancellationToken ct)
     {
-        var ticket = await _ticketTypeService.GetTicketTypeByIdAsync(id, ct);
-        if (ticket == null || ticket.EventId != eventId)
-        {
-            return NotFound(new { message = "Ticket type not found." });
-        }
+        var ticket = await mediator.Send(new GetTicketTypeByIdQuery(eventId, id), ct);
+        if (ticket == null) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Ticket type not found." });
         return Ok(ticket);
     }
 //update ticket 
@@ -86,11 +79,13 @@ public class TicketTypesController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateTicketType(int eventId, int id, [FromBody] UpdateTicketTypeRequest request, CancellationToken ct)
     {
-        var updated = await _ticketTypeService.UpdateTicketTypeAsync(id, request, 1, ct);
-        if (updated == null)
-        {
-            return NotFound(new { message = "Ticket type not found or unauthorized." });
-        }
+        var command = new UpdateTicketTypeCommand(
+            id, eventId, request.Name, request.Price, request.Quantity,
+            request.StartDate, request.EndDate, request.IsActive, 1 // Mock Organizer Id 1
+        );
+
+        var updated = await mediator.Send(command, ct);
+        if (updated == null) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Ticket type not found or unauthorized." });
         return Ok(updated);
     }
 //delete ticket type 
@@ -101,13 +96,10 @@ public class TicketTypesController : ControllerBase
      [HttpDelete("{id}")]
      [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteTicketType(int eventId, int id, CancellationToken ct)
+   public async Task<IActionResult> DeleteTicketType(int eventId, int id, CancellationToken ct)
     {
-        var success = await _ticketTypeService.DeleteTicketTypeAsync(id, 1, ct);
-        if (!success)
-        {
-            return NotFound(new { message = "Ticket type not found or unauthorized." });
-        }
-        return NoContent(); // 204 No Content
+        var success = await mediator.Send(new DeleteTicketTypeCommand(id, eventId, 1), ct);
+        if (!success) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Ticket type not found or unauthorized." });
+        return NoContent();
     }
 }

@@ -7,7 +7,7 @@ using SobEvents.Infrastructure.Services;
 using SobEvents.Application.Interfaces;
 using SobEvents.Api.Middlewares;
 using SobEvents.Api.Filters;
-using SobEvents.Application.Commands;
+using SobEvents.Application.Commands.Events;
 using SobEvents.Application.Behaviors;
 using MediatR;
 using FluentValidation;
@@ -69,7 +69,7 @@ builder.Services.AddValidatorsFromAssembly(typeof(CreateEventCommand).Assembly);
 
 // service registrations
 // builder.Services.AddScoped<IEventService, EventService>();
-builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
+// builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 
 var app = builder.Build();
