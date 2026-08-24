@@ -4,8 +4,12 @@ using SobEvents.Application.Interfaces;
 
 namespace SobEvents.Api.Controllers;
 
+/// <summary>
+/// Manages event creation, discovery, lifecycle states, and updates.
+/// </summary>
 [ApiController]
 [Route("api/events")]
+[Produces("application/json")]
 
 public class EventController : ControllerBase
 {
@@ -19,7 +23,12 @@ public class EventController : ControllerBase
 
 //create event
 
+ /// <summary>
+    /// Creates a new draft event.
+    /// </summary>
     [HttpPost]
+    [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult>CreateEvent([FromBody] CreateEventRequest request)
     {
         var createdEvent= await _eventService.CreateEventAsync(request, 1); // hardcoded organizerId for now
@@ -28,14 +37,27 @@ public class EventController : ControllerBase
     }
 
 //get all events
+
+/// <summary>
+    /// Retrieves a paginated list of published events with optional filtering.
+    /// </summary>
     [HttpGet]
+    [ProducesResponseType(typeof(PagedResponseDto<EventResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetEvents([FromQuery] PagedRequestDto request)
     {
         var response = await _eventService.GetAllEventsAsync(request);
         return Ok(response); //200 ok
     }
+
+
 //get event by id
+
+    /// <summary>
+    /// Retrieves full event details including HATEOAS action links.
+    /// </summary>
     [HttpGet("{id}")]
+     [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEventById(int id)
     {
         var evt= await _eventService.GetEventByIdAsync(id);
@@ -48,7 +70,14 @@ public class EventController : ControllerBase
 
 //update event
 
+    /// <summary>
+    /// Updates an existing event's details.
+    /// </summary>
+
 [HttpPut("{id}")] 
+[ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateEvent(int id, [FromBody] CreateEventRequest request)
     {
         // mocking organizerId = 1 
@@ -64,7 +93,13 @@ public class EventController : ControllerBase
 
 // delete event
 
+    /// <summary>
+    /// Soft-deletes an event from the catalog.
+    /// </summary>
+
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteEvent(int id)
     {
         var success = await _eventService.DeleteEventAsync(id, 1);
@@ -79,7 +114,15 @@ public class EventController : ControllerBase
     }
 
 // publish event 
+
+        /// <summary>
+    /// Publishes a draft event to make it visible to attendees.
+    /// </summary>
+    
     [HttpPost("{id}/publish")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> PublishEvent(int id, CancellationToken ct)
     {
         var (success, errorMessage) = await _eventService.PublishEventAsync(id, 1, ct); // Mock Organizer Id 1
@@ -104,7 +147,14 @@ public class EventController : ControllerBase
     }
 
 // cancel event
+
+        /// <summary>
+    /// Cancels an event and alerts registered attendees.
+    /// </summary>
+    
     [HttpPost("{id}/cancel")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CancelEvent(int id, CancellationToken ct)
     {
         var success = await _eventService.CancelEventAsync(id, 1, ct); // Mock Organizer Id 1
