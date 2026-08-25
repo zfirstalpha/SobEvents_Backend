@@ -89,5 +89,16 @@ public class ReservationsController(ISender mediator) : ControllerBase
         if (!success) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Reservation not found or already cancelled." });
         return NoContent();
     }
+//reservation expire
+/// <summary>
+    /// Reclaims abandoned reservations where the 15-minute hold has expired.
+    /// </summary>
+    [HttpPost("reservations/expire-stale")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ExpireStaleReservations(CancellationToken ct)
+    {
+        var count = await mediator.Send(new ExpireReservationsCommand(), ct);
+        return Ok(new { message = $"Successfully cancelled {count} expired reservation(s) and released tickets back to the pool.", count });
+    }
 
 }

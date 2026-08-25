@@ -42,7 +42,7 @@ public class CreateReservationCommandHandler(ISobEventsDbContext context,HybridC
             UserId = request.UserId,
             Quantity = request.Quantity,
             ReservedAt = DateTime.UtcNow,
-            ExpiryDate = DateTime.UtcNow.AddHours(24),
+            ExpiryDate = DateTime.UtcNow.AddMinutes(15),
             Status = "Reserved"
         };
             
