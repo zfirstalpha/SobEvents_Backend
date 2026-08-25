@@ -3,7 +3,6 @@ using Asp.Versioning;
 using Scalar.AspNetCore;
 using SobEvents.Infrastructure.Persistence.Context;
 using SobEvents.Infrastructure.Persistence.SeedData;
-using SobEvents.Infrastructure.Services;
 using SobEvents.Application.Interfaces;
 using SobEvents.Api.Middlewares;
 using SobEvents.Api.Filters;
@@ -61,6 +60,10 @@ builder.Services.AddScoped<ISobEventsDbContext>(provider =>
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(CreateEventCommand).Assembly);
+
+      // 1. Logging Behavior runs first (measures total execution time)
+    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+    
     // Register the Validation Behavior pipeline globally!
     cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 });
@@ -70,7 +73,7 @@ builder.Services.AddValidatorsFromAssembly(typeof(CreateEventCommand).Assembly);
 // service registrations
 // builder.Services.AddScoped<IEventService, EventService>();
 // builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
-builder.Services.AddScoped<IReservationService, ReservationService>();
+// builder.Services.AddScoped<IReservationService, ReservationService>();
 
 var app = builder.Build();
 
