@@ -1,12 +1,15 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using SobEvents.Application.Commands.Events;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
 
 namespace SobEvents.Application.Handlers.Events;
 
-public class UpdateEventCommandHandler(ISobEventsDbContext context)
+public class UpdateEventCommandHandler(
+    ISobEventsDbContext context,
+    HybridCache cache)
     : IRequestHandler<UpdateEventCommand, EventResponseDto?>
 {
     public async Task<EventResponseDto?> Handle(UpdateEventCommand request, CancellationToken cancellationToken)
@@ -24,6 +27,9 @@ public class UpdateEventCommandHandler(ISobEventsDbContext context)
         evt.ImageUrl = request.ImageUrl;
 
         await context.SaveChangesAsync(cancellationToken);
+
+        // MODULE 7 SESSION 2: Purge cache tag on mutation!
+        await cache.RemoveByTagAsync("events", cancellationToken);
 
         var links = new List<LinkDto>
         {

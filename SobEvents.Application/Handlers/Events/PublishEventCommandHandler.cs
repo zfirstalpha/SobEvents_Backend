@@ -1,11 +1,14 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using SobEvents.Application.Commands.Events;
 using SobEvents.Application.Interfaces;
 
 namespace SobEvents.Application.Handlers.Events;
 
-public class PublishEventCommandHandler(ISobEventsDbContext context)
+public class PublishEventCommandHandler(
+    ISobEventsDbContext context,
+    HybridCache cache)
     : IRequestHandler<PublishEventCommand, PublishEventResult>
 {
     public async Task<PublishEventResult> Handle(PublishEventCommand request, CancellationToken cancellationToken)
@@ -20,6 +23,9 @@ public class PublishEventCommandHandler(ISobEventsDbContext context)
 
         evt.Status = "Published";
         await context.SaveChangesAsync(cancellationToken);
+
+        // Purge cache so the newly published event appears immediately
+        await cache.RemoveByTagAsync("events", cancellationToken);
 
         return new PublishEventResult(true, null);
     }

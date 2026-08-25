@@ -70,6 +70,16 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddValidatorsFromAssembly(typeof(CreateEventCommand).Assembly);    
 
+// HybridCache with stampede protection
+builder.Services.AddHybridCache(options =>
+{
+    options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions
+    {
+        Expiration = TimeSpan.FromMinutes(5),
+        LocalCacheExpiration = TimeSpan.FromMinutes(2)
+    };
+});
+
 // service registrations
 // builder.Services.AddScoped<IEventService, EventService>();
 // builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
