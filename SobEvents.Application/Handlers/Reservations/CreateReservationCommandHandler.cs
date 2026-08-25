@@ -45,7 +45,7 @@ public class CreateReservationCommandHandler(ISobEventsDbContext context,HybridC
             ExpiryDate = DateTime.UtcNow.AddHours(24),
             Status = "Reserved"
         };
-
+            
         context.Reservations.Add(reservation);
         await context.SaveChangesAsync(cancellationToken);
         await cache.RemoveByTagAsync("tickets", cancellationToken);
