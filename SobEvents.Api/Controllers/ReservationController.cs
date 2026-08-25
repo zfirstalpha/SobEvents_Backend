@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
+using Asp.Versioning;
+using MediatR;
+using SobEvents.Application.Commands.Reservations;
+using SobEvents.Application.Queries.Reservations;
 
 namespace SobEvents.Api.Controllers;
 
@@ -10,14 +14,8 @@ namespace SobEvents.Api.Controllers;
 [ApiController]
 [Route("api/v{version:apiVersion}")] // Nested routing
 [Produces("application/json")]
-public class ReservationsController : ControllerBase
+public class ReservationsController(ISender mediator) : ControllerBase
 {
-    private readonly IReservationService _reservationService;
-
-    public ReservationsController(IReservationService reservationService)
-    {
-        _reservationService = reservationService;
-    }
 //create reservagtion
 
   /// <summary>
@@ -29,12 +27,11 @@ public class ReservationsController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateReservation(int ticketTypeId, [FromBody] CreateReservationRequest request, CancellationToken ct)
     {
-        // mocking userId = 1 ....Attendee
-        var result = await _reservationService.ReserveTicketsAsync(ticketTypeId, request, 1,ct);
+        var command = new CreateReservationCommand(ticketTypeId, request.Quantity, 1); // Mock Attendee Id 1
+        var result = await mediator.Send(command, ct);
 
         if (!result.IsSuccess)
         {
-            
             return Conflict(new ProblemDetails 
             { 
                 Title = "Booking Conflict", 
@@ -43,10 +40,8 @@ public class ReservationsController : ControllerBase
             });
         }
 
-        // REST 201 + location header pointing to GetReservationById
         return CreatedAtAction(nameof(GetReservationById), new { id = result.Reservation!.Id }, result.Reservation);
     }
-
  // get reservation detail by id
 
  /// <summary>
@@ -57,13 +52,8 @@ public class ReservationsController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetReservationById(int id, CancellationToken ct)
     {
-        var reservation = await _reservationService.GetReservationByIdAsync(id, 1, ct); // Mock Attendee Id 1
-        
-        if (reservation == null)
-        {
-            return NotFound(new { message = "Reservation not found." });
-        }
-
+        var reservation = await mediator.Send(new GetReservationByIdQuery(id, 1), ct);
+        if (reservation == null) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Reservation not found." });
         return Ok(reservation);
     }
 
@@ -78,7 +68,7 @@ public class ReservationsController : ControllerBase
     
     public async Task<IActionResult> GetMyReservations(CancellationToken ct)
     {
-        var reservations = await _reservationService.GetReservationsByUserAsync(1, ct); // Mock Attendee Id 1
+        var reservations = await mediator.Send(new GetMyReservationsQuery(1), ct);
         return Ok(reservations);
     }
 
@@ -93,14 +83,9 @@ public class ReservationsController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CancelReservation(int id, CancellationToken ct)
     {
-        var success = await _reservationService.CancelReservationAsync(id, 1, ct); // Mock Attendee Id 1
-        
-        if (!success)
-        {
-            return NotFound(new { message = "Reservation not found or already cancelled." });
-        }
-
-        return NoContent(); // 204 No Content
+        var success = await mediator.Send(new CancelReservationCommand(id, 1), ct);
+        if (!success) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Reservation not found or already cancelled." });
+        return NoContent();
     }
 
 }
