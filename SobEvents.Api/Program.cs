@@ -10,7 +10,8 @@ using SobEvents.Application.Commands.Events;
 using SobEvents.Application.Behaviors;
 using MediatR;
 using FluentValidation;
-
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,52 @@ builder.Services.AddApiVersioning(options =>
     options.GroupNameFormat = "'v'VVV";
     options.SubstituteApiVersionInUrl = true;
 });
+
+//Token-Bucket Rate Limiter Configuration
+builder.Services.AddRateLimiter(options =>
+{
+    // Return honest 429 status code
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // 1. General Limiter for Browsing (Events & Ticket Types)
+    options.AddTokenBucketLimiter(policyName: "general-limiter", opt =>
+    {
+        opt.TokenLimit = 20;               // Maximum capacity in bucket
+        opt.QueueLimit = 0;                // Do not buffer requests; reject immediately
+        opt.TokensPerPeriod = 5;           // Add 5 tokens...
+        opt.ReplenishmentPeriod = TimeSpan.FromSeconds(10); // ...every 10 seconds
+        opt.AutoReplenishment = true;
+    });
+
+    // 2. Strict Limiter for Booking Reservations (Anti-Scalper Defense)
+    options.AddTokenBucketLimiter(policyName: "booking-limiter", opt =>
+    {
+        opt.TokenLimit = 5;                // Maximum 5 rapid clicks
+        opt.QueueLimit = 0;
+        opt.TokensPerPeriod = 1;           // Add 1 token...
+        opt.ReplenishmentPeriod = TimeSpan.FromSeconds(10); // ...every 10 seconds
+        opt.AutoReplenishment = true;
+    });
+
+    // Format the 429 response into standard RFC 7807 ProblemDetails
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/problem+json";
+
+        var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Too Many Requests",
+            Type = "https://datatracker.ietf.org/doc/html/rfc6585#section-4",
+            Detail = "Rate limit exceeded. You are making requests too quickly. Please wait and try again.",
+            Instance = $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}"
+        };
+
+        await context.HttpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken: token);
+    };
+});
+
 
 // problemdetails & exception handling
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -104,8 +151,10 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<SobEventsDbContext>();
     await DbSeeder.SeedAsync(context);
 }
-
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseRateLimiter();
+
 
 app.UseAuthorization();
 

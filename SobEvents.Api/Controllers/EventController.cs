@@ -2,10 +2,9 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SobEvents.Application.DTOs;
-using SobEvents.Application.Interfaces;
 using SobEvents.Application.Commands.Events;
 using SobEvents.Application.Queries.Events;
-
+using Microsoft.AspNetCore.RateLimiting;
 namespace SobEvents.Api.Controllers;
 
 /// <summary>
@@ -15,6 +14,7 @@ namespace SobEvents.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/events")]
 [Produces("application/json")]
+[EnableRateLimiting("general-limiter")] 
 
 public class EventsController(ISender mediator) : ControllerBase
 {

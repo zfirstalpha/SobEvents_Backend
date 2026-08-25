@@ -5,6 +5,7 @@ using Asp.Versioning;
 using MediatR;
 using SobEvents.Application.Commands.Reservations;
 using SobEvents.Application.Queries.Reservations;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace SobEvents.Api.Controllers;
 
@@ -14,6 +15,7 @@ namespace SobEvents.Api.Controllers;
 [ApiController]
 [Route("api/v{version:apiVersion}")] // Nested routing
 [Produces("application/json")]
+[EnableRateLimiting("general-limiter")] 
 public class ReservationsController(ISender mediator) : ControllerBase
 {
 //create reservagtion

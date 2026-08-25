@@ -5,6 +5,7 @@ using SobEvents.Application.Interfaces;
 using SobEvents.Application.Commands.TicketTypes;
 using SobEvents.Application.Queries.TicketTypes;
 using MediatR;
+using Microsoft.AspNetCore.RateLimiting;
 namespace SobEvents.Api.Controllers;
 
 /// <summary>
@@ -14,7 +15,7 @@ namespace SobEvents.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/events/{eventId}/tickets")]//nested restufull routing
 [Produces("application/json")]
-
+[EnableRateLimiting("general-limiter")] 
 public class TicketTypesController(ISender mediator) : ControllerBase
 {
 //create a new ticket type for an event
