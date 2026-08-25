@@ -3,8 +3,8 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
-using SobEvents.Application.Commands;
-using SobEvents.Application.Queries;
+using SobEvents.Application.Commands.Events;
+using SobEvents.Application.Queries.Events;
 
 namespace SobEvents.Api.Controllers;
 
