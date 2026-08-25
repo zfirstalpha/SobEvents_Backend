@@ -12,7 +12,8 @@ using MediatR;
 using FluentValidation;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
-
+using SobEvents.Infrastructure.Services;
+using SobEvents.Infrastructure.BackgroundServices;
 var builder = WebApplication.CreateBuilder(args);
 
 //di container validation (catch captive dependencies at startup)
@@ -128,6 +129,10 @@ builder.Services.AddHybridCache(options =>
 });
 
 // service registrations
+//singletton so it can be shared across all request
+builder.Services.AddSingleton<ITicketJobQueue, TicketJobQueue>();
+//autonomous backgorund service
+builder.Services.AddHostedService<TicketProcessingWorker>();
 // builder.Services.AddScoped<IEventService, EventService>();
 // builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
 // builder.Services.AddScoped<IReservationService, ReservationService>();

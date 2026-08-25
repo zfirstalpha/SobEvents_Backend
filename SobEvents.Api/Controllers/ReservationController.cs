@@ -101,4 +101,27 @@ public class ReservationsController(ISender mediator) : ControllerBase
         return Ok(new { message = $"Successfully cancelled {count} expired reservation(s) and released tickets back to the pool.", count });
     }
 
+/// <summary>
+    /// Enqueues background ticket PDF generation and email delivery. Returns immediately with 202 Accepted.
+    /// </summary>
+    [HttpPost("reservations/{id}/send-tickets")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SendTickets(int id, CancellationToken ct)
+    {
+        var jobId = await mediator.Send(new QueueTicketDispatchCommand(id, 1), ct); // Mock Attendee Id 1
+
+        if (jobId == null)
+        {
+            return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Reservation not found or has been cancelled." });
+        }
+
+        // 202 Accepted indicates work has been queued for background execution
+        return Accepted(new 
+        { 
+            message = "Ticket delivery has been queued in the background.", 
+            jobId = jobId.Value,
+            status = "Processing"
+        });
+    }
 }
