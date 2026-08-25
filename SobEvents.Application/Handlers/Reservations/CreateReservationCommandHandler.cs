@@ -1,13 +1,14 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using SobEvents.Application.Commands.Reservations;
+using Microsoft.Extensions.Caching.Hybrid;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
 using SobEvents.Domain.Entities;
 
 namespace SobEvents.Application.Handlers.Reservations;
 
-public class CreateReservationCommandHandler(ISobEventsDbContext context)
+public class CreateReservationCommandHandler(ISobEventsDbContext context,HybridCache cache)
     : IRequestHandler<CreateReservationCommand, ReservationResult>
 {
     public async Task<ReservationResult> Handle(CreateReservationCommand request, CancellationToken cancellationToken)
@@ -47,6 +48,7 @@ public class CreateReservationCommandHandler(ISobEventsDbContext context)
 
         context.Reservations.Add(reservation);
         await context.SaveChangesAsync(cancellationToken);
+        await cache.RemoveByTagAsync("tickets", cancellationToken);
 
         var links = new List<LinkDto>
         {

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using SobEvents.Application.Commands.TicketTypes;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
@@ -7,7 +8,9 @@ using SobEvents.Domain.Entities;
 
 namespace SobEvents.Application.Handlers.TicketTypes;
 
-public class CreateTicketTypeCommandHandler(ISobEventsDbContext context)
+public class CreateTicketTypeCommandHandler(
+    ISobEventsDbContext context,
+    HybridCache cache)
     : IRequestHandler<CreateTicketTypeCommand, TicketTypeResponseDto?>
 {
     public async Task<TicketTypeResponseDto?> Handle(CreateTicketTypeCommand request, CancellationToken cancellationToken)
@@ -30,6 +33,9 @@ public class CreateTicketTypeCommandHandler(ISobEventsDbContext context)
 
         context.TicketTypes.Add(ticketType);
         await context.SaveChangesAsync(cancellationToken);
+
+        // Invalidate tickets cache tag!
+        await cache.RemoveByTagAsync("tickets", cancellationToken);
 
         var links = new List<LinkDto>
         {

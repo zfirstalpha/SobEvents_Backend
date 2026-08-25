@@ -1,12 +1,15 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using SobEvents.Application.Commands.TicketTypes;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
 
 namespace SobEvents.Application.Handlers.TicketTypes;
 
-public class UpdateTicketTypeCommandHandler(ISobEventsDbContext context)
+public class UpdateTicketTypeCommandHandler(
+    ISobEventsDbContext context,
+    HybridCache cache)
     : IRequestHandler<UpdateTicketTypeCommand, TicketTypeResponseDto?>
 {
     public async Task<TicketTypeResponseDto?> Handle(UpdateTicketTypeCommand request, CancellationToken cancellationToken)
@@ -26,6 +29,9 @@ public class UpdateTicketTypeCommandHandler(ISobEventsDbContext context)
         ticket.IsActive = request.IsActive;
 
         await context.SaveChangesAsync(cancellationToken);
+
+        // Invalidate tickets cache tag on update!
+        await cache.RemoveByTagAsync("tickets", cancellationToken);
 
         var reserved = ticket.Reservations.Where(r => r.Status != "Cancelled").Sum(r => r.Quantity);
         var available = ticket.Quantity - reserved;
