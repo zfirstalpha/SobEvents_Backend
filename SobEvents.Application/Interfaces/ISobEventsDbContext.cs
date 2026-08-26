@@ -9,6 +9,6 @@ public interface ISobEventsDbContext
     DbSet<Event> Events { get; }
     DbSet<TicketType> TicketTypes { get; }
     DbSet<Reservation> Reservations { get; }
-
+    DbSet<RefreshToken> RefreshTokens { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

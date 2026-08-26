@@ -11,4 +11,5 @@ public class AppUser : IdentityUser<int>
     // Navigation Properties
     public ICollection<Event> OrganizedEvents { get; set; } = new List<Event>();
     public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }

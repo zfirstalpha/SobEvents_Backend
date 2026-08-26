@@ -16,6 +16,7 @@ public class SobEventsDbContext : IdentityDbContext<AppUser, IdentityRole<int>, 
     public DbSet<Event> Events => Set<Event>();
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
