@@ -4,12 +4,12 @@ using SobEvents.Domain.Entities;
 
 namespace SobEvents.Infrastructure.Persistence.Configurations;
 
-public class UserConfiguration : IEntityTypeConfiguration<User>
+public class UserConfiguration : IEntityTypeConfiguration<AppUser>
 {
-    public void Configure(EntityTypeBuilder<User> builder)
+    public void Configure(EntityTypeBuilder<AppUser> builder)
     {
-        //enforce unique username and email
-        builder.HasIndex(u=>u.Username).IsUnique();
-        builder.HasIndex(u=>u.Email).IsUnique();
+      
+        builder.Property(u => u.FirstName).HasMaxLength(100).IsRequired();
+        builder.Property(u => u.LastName).HasMaxLength(100).IsRequired();
     }
 }

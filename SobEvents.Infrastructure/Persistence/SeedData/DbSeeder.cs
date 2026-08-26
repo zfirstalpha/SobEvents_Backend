@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SobEvents.Domain.Entities;
 using SobEvents.Infrastructure.Persistence.Context;
@@ -6,24 +7,44 @@ namespace SobEvents.Infrastructure.Persistence.SeedData;
 
 public static class DbSeeder
 {
-    public static async Task SeedAsync(SobEventsDbContext context, CancellationToken ct= default)
+    public static async Task SeedAsync(SobEventsDbContext context,
+    UserManager<AppUser> userManager,
+        RoleManager<IdentityRole<int>> roleManager,
+         CancellationToken ct= default)
     {
         await context.Database.MigrateAsync(ct);//apply any pending migration automatically on starutup
 
-        if(!await context.Users.AnyAsync(ct))
+        // 2. Seed Default Roles (Module 11 Session 1)
+        string[] roles = ["Organizer", "Attendee"];
+        foreach (var role in roles)
         {
-            var testOrganizer = new User
+            if (!await roleManager.RoleExistsAsync(role))
             {
-                Username="test_organizer",
-                Email="testorganizer@gmail.com",
-                FirstName ="Test",
-                LastName="Organizer",
-                PasswordHash="Test@123",
-                Role="Organizer"
-                
+                await roleManager.CreateAsync(new IdentityRole<int>(role));
+            }
+        }
+
+// 3. Seed Default Organizer Admin User
+        var adminEmail = "admin@sobevents.com";
+        var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
+
+        if (existingAdmin == null)
+        {
+            var adminUser = new AppUser
+            {
+                UserName = "admin",
+                Email = adminEmail,
+                FirstName = "SobEvents",
+                LastName = "Admin",
+                EmailConfirmed = true
             };
-            context.Users.Add(testOrganizer);
-            await context.SaveChangesAsync(ct);
+            // Creates user with cryptographic PBKDF2 password hash!
+            var result = await userManager.CreateAsync(adminUser, "Admin123!");
+
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, "Organizer");
+            }
         }
 
     }

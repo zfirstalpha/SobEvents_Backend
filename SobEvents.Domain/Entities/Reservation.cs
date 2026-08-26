@@ -12,5 +12,5 @@ public class Reservation
     public string Status { get; set; } = "Reserved"; // Reserved, Paid, Cancelled
 
     public TicketType TicketType { get; set; } = null!;
-    public User User { get; set; } = null!;
+    public AppUser User { get; set; } = null!;
 }

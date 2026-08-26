@@ -16,6 +16,6 @@ public class Event
     public string Status { get; set; } = "Draft"; // Draft, Published, Cancelled
     public bool IsDeleted { get; set; } = false; // Soft delete flag
 
-    public User Organizer { get; set; } = null!;
+    public AppUser Organizer { get; set; } = null!;
     public ICollection<TicketType> TicketTypes { get; set; } = new List<TicketType>();
 }

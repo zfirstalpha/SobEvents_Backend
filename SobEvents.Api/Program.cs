@@ -14,6 +14,8 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using SobEvents.Infrastructure.Services;
 using SobEvents.Infrastructure.BackgroundServices;
+using Microsoft.AspNetCore.Identity;
+using SobEvents.Domain.Entities;
 var builder = WebApplication.CreateBuilder(args);
 
 //di container validation (catch captive dependencies at startup)
@@ -104,6 +106,28 @@ builder.Services.AddDbContext<SobEventsDbContext>(options =>
 builder.Services.AddScoped<ISobEventsDbContext>(provider => 
     provider.GetRequiredService<SobEventsDbContext>());
 
+// Identity Configuration
+builder.Services.AddDataProtection();
+builder.Services.AddIdentityCore<AppUser>(options =>
+{
+    // password complexity rule
+    options.Password.RequireDigit = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireNonAlphanumeric = false;
+
+    // Brute-force Lockout Defense
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    options.User.RequireUniqueEmail = true;
+})
+.AddRoles<IdentityRole<int>>()
+.AddEntityFrameworkStores<SobEventsDbContext>()
+.AddDefaultTokenProviders();
+
 //  Register MediatR, FluentValidation, and Pipeline Behaviors
 builder.Services.AddMediatR(cfg =>
 {
@@ -131,7 +155,7 @@ builder.Services.AddHybridCache(options =>
 // service registrations
 //singletton so it can be shared across all request
 builder.Services.AddSingleton<ITicketJobQueue, TicketJobQueue>();
-//autonomous backgorund service
+// backgorund service
 builder.Services.AddHostedService<TicketProcessingWorker>();
 // builder.Services.AddScoped<IEventService, EventService>();
 // builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
@@ -154,7 +178,9 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<SobEventsDbContext>();
-    await DbSeeder.SeedAsync(context);
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+    await DbSeeder.SeedAsync(context, userManager, roleManager);
 }
 app.UseHttpsRedirection();
 app.UseRouting();
