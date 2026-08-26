@@ -162,7 +162,7 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 .AddEntityFrameworkStores<SobEventsDbContext>()
 .AddDefaultTokenProviders();
 
-// MODULE 11 SESSION 2: JWT Bearer Authentication Configuration
+//  JWT Bearer Authentication Configuration
 var jwtConfig = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
     ?? throw new InvalidOperationException("JWT configuration section is missing.");
 
@@ -217,6 +217,9 @@ builder.Services.AddHybridCache(options =>
 });
 
 // service registrations
+//  HttpContextAccessor & Scoped CurrentUserService
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 //singletton so it can be shared across all request
 builder.Services.AddSingleton<ITicketJobQueue, TicketJobQueue>();
 // backgorund service

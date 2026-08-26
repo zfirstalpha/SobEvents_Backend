@@ -1,11 +1,12 @@
 using Asp.Versioning;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using SobEvents.Application.Commands.TicketTypes;
 using SobEvents.Application.DTOs;
 using SobEvents.Application.Interfaces;
-using SobEvents.Application.Commands.TicketTypes;
 using SobEvents.Application.Queries.TicketTypes;
-using MediatR;
-using Microsoft.AspNetCore.RateLimiting;
 namespace SobEvents.Api.Controllers;
 
 /// <summary>
@@ -16,7 +17,7 @@ namespace SobEvents.Api.Controllers;
 [Route("api/v{version:apiVersion}/events/{eventId}/tickets")]//nested restufull routing
 [Produces("application/json")]
 [EnableRateLimiting("general-limiter")] 
-public class TicketTypesController(ISender mediator) : ControllerBase
+public class TicketTypesController(ISender mediator, ICurrentUserService currentUser) : ControllerBase
 {
 //create a new ticket type for an event
 
@@ -25,6 +26,7 @@ public class TicketTypesController(ISender mediator) : ControllerBase
     /// </summary>
     
     [HttpPost]
+    [Authorize(Roles = "Organizer")]
     [ProducesResponseType(typeof(TicketTypeResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -32,7 +34,7 @@ public class TicketTypesController(ISender mediator) : ControllerBase
     {
         var command = new CreateTicketTypeCommand(
             eventId, request.Name, request.Price, request.Quantity,
-            request.StartDate, request.EndDate, 1 // Mock Organizer Id 1
+            request.StartDate, request.EndDate, currentUser.UserId!.Value
         );
 
         var ticketType = await mediator.Send(command, ct);
@@ -75,6 +77,7 @@ public class TicketTypesController(ISender mediator) : ControllerBase
     /// Updates pricing or capacity for a ticket tier.
     /// </summary>
      [HttpPut("{id}")]
+     [Authorize(Roles = "Organizer")]
       [ProducesResponseType(typeof(TicketTypeResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -82,7 +85,7 @@ public class TicketTypesController(ISender mediator) : ControllerBase
     {
         var command = new UpdateTicketTypeCommand(
             id, eventId, request.Name, request.Price, request.Quantity,
-            request.StartDate, request.EndDate, request.IsActive, 1 // Mock Organizer Id 1
+            request.StartDate, request.EndDate, request.IsActive, currentUser.UserId!.Value
         );
 
         var updated = await mediator.Send(command, ct);
@@ -99,7 +102,7 @@ public class TicketTypesController(ISender mediator) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
    public async Task<IActionResult> DeleteTicketType(int eventId, int id, CancellationToken ct)
     {
-        var success = await mediator.Send(new DeleteTicketTypeCommand(id, eventId, 1), ct);
+        var success = await mediator.Send(new DeleteTicketTypeCommand(id, eventId, currentUser.UserId!.Value), ct);
         if (!success) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Ticket type not found or unauthorized." });
         return NoContent();
     }

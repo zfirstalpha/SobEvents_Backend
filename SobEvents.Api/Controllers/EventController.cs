@@ -1,69 +1,61 @@
 using Asp.Versioning;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SobEvents.Application.DTOs;
-using SobEvents.Application.Commands.Events;
-using SobEvents.Application.Queries.Events;
 using Microsoft.AspNetCore.RateLimiting;
+using SobEvents.Application.Commands.Events;
+using SobEvents.Application.DTOs;
+using SobEvents.Application.Interfaces;
+using SobEvents.Application.Queries.Events;
+
 namespace SobEvents.Api.Controllers;
 
 /// <summary>
-/// Manages event creation, discovery, lifecycle states, and updates.
+/// event creation, discovery
 /// </summary>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/events")]
 [Produces("application/json")]
-[EnableRateLimiting("general-limiter")] 
-
-public class EventsController(ISender mediator) : ControllerBase
+[EnableRateLimiting("general-limiter")]
+public class EventsController(ISender mediator, ICurrentUserService currentUser) : ControllerBase
 {
-
-
-//create event
-
- /// <summary>
-    /// Creates a new draft event.
+    /// <summary>
+    /// Creates a new draft event. Requires Organizer role.
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Organizer")] // Role-based Authorization
     [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-   public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request, CancellationToken ct)
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request, CancellationToken ct)
     {
-      //  map dto to command with mock organizer id 1
         var command = new CreateEventCommand(
             request.Name, request.Description, request.StartDate,
-            request.EndDate, request.Location, request.ImageUrl, 1
+            request.EndDate, request.Location, request.ImageUrl, currentUser.UserId!.Value 
         );
-        
-        //  MediatR runs FluentValidation behavior and dispatches to the Handler!
+
         var createdEvent = await mediator.Send(command, ct);
-
-        return CreatedAtAction(nameof(GetEvents), new { id = createdEvent.Id }, createdEvent);
-
+        return CreatedAtAction(nameof(GetEventById), new { id = createdEvent.Id }, createdEvent);
     }
 
-//get all events
-
-/// <summary>
-    /// Retrieves a paginated list of published events with optional filtering.
+    /// <summary>
+    /// Retrieves a paginated list of events with optional search filtering (Public).
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResponseDto<EventResponseDto>), StatusCodes.Status200OK)]
-   public async Task<IActionResult> GetEvents([FromQuery] PagedRequestDto request, CancellationToken ct)
+    public async Task<IActionResult> GetEvents([FromQuery] PagedRequestDto request, CancellationToken ct)
     {
         var response = await mediator.Send(new GetEventsPagedQuery(request), ct);
         return Ok(response);
     }
 
-
-//get event by id
-
     /// <summary>
-    /// Retrieves full event details including HATEOAS action links.
+    /// Retrieves full event details including HATEOAS action links (Public).
     /// </summary>
     [HttpGet("{id}")]
-     [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetEventById(int id, CancellationToken ct)
     {
@@ -72,21 +64,19 @@ public class EventsController(ISender mediator) : ControllerBase
         return Ok(evt);
     }
 
-//update event
-
     /// <summary>
-    /// Updates an existing event's details.
+    /// Updates an existing event. Requires Organizer role and ownership.
     /// </summary>
-
-[HttpPut("{id}")] 
-[ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Organizer")]
+    [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateEvent(int id, [FromBody] CreateEventRequest request, CancellationToken ct)
     {
         var command = new UpdateEventCommand(
             id, request.Name, request.Description, request.StartDate,
-            request.EndDate, request.Location, request.ImageUrl, 1 // Mock Organizer Id 1
+            request.EndDate, request.Location, request.ImageUrl, currentUser.UserId!.Value
         );
 
         var updatedEvent = await mediator.Send(command, ct);
@@ -94,35 +84,31 @@ public class EventsController(ISender mediator) : ControllerBase
         return Ok(updatedEvent);
     }
 
-// delete event
-
     /// <summary>
-    /// Soft-deletes an event from the catalog.
+    /// Soft-deletes an event from the catalog. Requires Organizer role.
     /// </summary>
-
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Organizer")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteEvent(int id, CancellationToken ct)
     {
-        var success = await mediator.Send(new DeleteEventCommand(id, 1), ct);
+        var success = await mediator.Send(new DeleteEventCommand(id, currentUser.UserId!.Value), ct);
         if (!success) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Event not found or unauthorized." });
         return NoContent();
     }
 
-// publish event 
-
-        /// <summary>
-    /// Publishes a draft event to make it visible to attendees.
+    /// <summary>
+    /// Publishes a draft event to make it visible to attendees. Requires Organizer role.
     /// </summary>
-    
     [HttpPost("{id}/publish")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [Authorize(Roles = "Organizer")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> PublishEvent(int id, CancellationToken ct)
     {
-        var result = await mediator.Send(new PublishEventCommand(id, 1), ct);
+        var result = await mediator.Send(new PublishEventCommand(id, currentUser.UserId!.Value), ct);
 
         if (!result.Success)
         {
@@ -142,18 +128,16 @@ public class EventsController(ISender mediator) : ControllerBase
         return NoContent();
     }
 
-// cancel event
-
-        /// <summary>
-    /// Cancels an event and alerts registered attendees.
+    /// <summary>
+    /// Cancels an event. Requires Organizer role.
     /// </summary>
-    
     [HttpPost("{id}/cancel")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [Authorize(Roles = "Organizer")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CancelEvent(int id, CancellationToken ct)
     {
-        var success = await mediator.Send(new CancelEventCommand(id, 1), ct);
+        var success = await mediator.Send(new CancelEventCommand(id, currentUser.UserId!.Value), ct);
         if (!success) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Event not found or already cancelled." });
         return NoContent();
     }
