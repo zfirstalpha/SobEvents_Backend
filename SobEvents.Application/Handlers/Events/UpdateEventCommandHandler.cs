@@ -28,7 +28,7 @@ public class UpdateEventCommandHandler(
 
         await context.SaveChangesAsync(cancellationToken);
 
-        // MODULE 7 SESSION 2: Purge cache tag on mutation!
+        // Purge cache tag on mutation!
         await cache.RemoveByTagAsync("events", cancellationToken);
 
         var links = new List<LinkDto>

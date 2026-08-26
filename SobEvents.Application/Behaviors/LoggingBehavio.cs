@@ -15,7 +15,7 @@ public class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TReque
     {
         var requestName = typeof(TRequest).Name;
 
-        // MODULE 4 & 7: Structured template logging
+        //  Structured template logging
         logger.LogInformation("Handling CQRS command/query: {RequestName}", requestName);
 
         var stopwatch = Stopwatch.StartNew();

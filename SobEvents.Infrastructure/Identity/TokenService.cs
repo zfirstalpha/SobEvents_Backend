@@ -99,7 +99,7 @@ public class TokenService(
             return new AuthResult(false, "Refresh token does not exist.", null);
         }
 
-        // 3. MODULE 11 SESSION 2: THEFT DETECTION!
+        // 3. THEFT DETECTION!
         // If the token was ALREADY USED, someone is trying to reuse a consumed token!
         if (storedToken.IsUsed)
         {

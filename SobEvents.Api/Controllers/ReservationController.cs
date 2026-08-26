@@ -18,7 +18,7 @@ namespace SobEvents.Api.Controllers;
 [Route("api/v{version:apiVersion}")]
 [Produces("application/json")]
 [EnableRateLimiting("booking-limiter")]
-[Authorize] // MODULE 10: All reservation actions require authentication
+[Authorize] //All reservation actions require authentication
 public class ReservationsController(ISender mediator, ICurrentUserService currentUser) : ControllerBase
 {
     /// <summary>

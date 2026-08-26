@@ -6,7 +6,7 @@ using SobEvents.Domain.Entities;
 
 namespace SobEvents.Infrastructure.Persistence.Context;
 
-// MODULE 11 SESSION 1: IdentityDbContext manages all security tables (Users, Roles, Claims)
+//  IdentityDbContext manages all security tables (Users, Roles, Claims)
 public class SobEventsDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>, ISobEventsDbContext
 {
     public SobEventsDbContext(DbContextOptions<SobEventsDbContext> options) : base(options)
