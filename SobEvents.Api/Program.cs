@@ -16,6 +16,11 @@ using SobEvents.Infrastructure.Services;
 using SobEvents.Infrastructure.BackgroundServices;
 using Microsoft.AspNetCore.Identity;
 using SobEvents.Domain.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using SobEvents.Application.DTOs;
+using SobEvents.Infrastructure.Identity;
+using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 //di container validation (catch captive dependencies at startup)
@@ -46,7 +51,7 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-//Token-Bucket Rate Limiter Configuration
+// Rate Limiter Configuration
 builder.Services.AddRateLimiter(options =>
 {
     // Return honest 429 status code
@@ -106,6 +111,14 @@ builder.Services.AddDbContext<SobEventsDbContext>(options =>
 builder.Services.AddScoped<ISobEventsDbContext>(provider => 
     provider.GetRequiredService<SobEventsDbContext>());
 
+
+//JWT Options Pattern with Fail-on-Start Validation
+builder.Services.AddOptions<JwtOptions>()
+    .BindConfiguration(JwtOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+
 // Identity Configuration
 builder.Services.AddDataProtection();
 builder.Services.AddIdentityCore<AppUser>(options =>
@@ -127,6 +140,36 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 .AddRoles<IdentityRole<int>>()
 .AddEntityFrameworkStores<SobEventsDbContext>()
 .AddDefaultTokenProviders();
+
+// MODULE 11 SESSION 2: JWT Bearer Authentication Configuration
+var jwtConfig = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+    ?? throw new InvalidOperationException("JWT configuration section is missing.");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtConfig.Issuer,
+        ValidAudience = jwtConfig.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key)),
+        ClockSkew = TimeSpan.Zero // Strict expiration without 5-minute grace period
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// Token Service
+builder.Services.AddScoped<ITokenService, TokenService>();
+
 
 //  Register MediatR, FluentValidation, and Pipeline Behaviors
 builder.Services.AddMediatR(cfg =>
@@ -186,7 +229,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseRateLimiter();
 
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
