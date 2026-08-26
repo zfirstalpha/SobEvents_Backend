@@ -38,6 +38,27 @@ builder.Services.AddControllers(options =>
 }
 );
 
+
+//  Named CORS Policy for Angular Client
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularDevClient", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200") // Local Angular Dev Server
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Strictly required for SignalR and HttpOnly cookies!
+    });
+});
+
+//Antiforgery Double-Submit Configuration
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+    options.Cookie.Name = "XSRF-TOKEN";
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
  //api versioning 
 builder.Services.AddApiVersioning(options =>
 {
@@ -227,6 +248,7 @@ using (var scope = app.Services.CreateScope())
 }
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors("AngularDevClient");
 app.UseRateLimiter();
 
 app.UseAuthentication();
