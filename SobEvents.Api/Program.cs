@@ -184,7 +184,23 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key)),
         ClockSkew = TimeSpan.Zero // Strict expiration without 5-minute grace period
     };
+
+
+    // Extracts JWT from incoming HttpOnly Cookie
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            if (context.Request.Cookies.TryGetValue("accessToken", out var cookieToken))
+            {
+                context.Token = cookieToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
+
+
 
 builder.Services.AddAuthorization();
 

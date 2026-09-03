@@ -1,5 +1,13 @@
 namespace SobEvents.Application.DTOs;
 
+public record UserDto(
+    int Id,
+    string Email,
+    string FirstName,
+    string LastName,
+    string Role
+);
+
 public record RegisterRequest(
     string Username,
     string Email,
@@ -14,19 +22,10 @@ public record LoginRequest(
     string Password
 );
 
-public record AuthResponseDto(
-    string AccessToken,
-    string RefreshToken,
-    DateTime ExpiresAt
-);
-
-public record RefreshTokenRequest(
-    string AccessToken,
-    string RefreshToken
-);
-
 public record AuthResult(
     bool IsSuccess,
     string? ErrorMessage,
-    AuthResponseDto? Data
+    UserDto? User,
+    string? AccessToken = null,
+    string? RefreshToken = null
 );

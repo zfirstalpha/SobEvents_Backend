@@ -14,14 +14,12 @@ public class RegisterUserCommandHandler(
 {
     public async Task<AuthResult> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
-        // 1. Check if email is already registered
         var existingUser = await userManager.FindByEmailAsync(request.Email);
         if (existingUser != null)
         {
             return new AuthResult(false, "User with this email already exists.", null);
         }
 
-        // 2. Create the Identity User
         var user = new AppUser
         {
             UserName = request.Username,
@@ -37,11 +35,11 @@ public class RegisterUserCommandHandler(
             return new AuthResult(false, errors, null);
         }
 
-        // 3. Assign Role
         await userManager.AddToRoleAsync(user, request.Role);
 
-        // 4. Issue initial Access + Refresh Tokens
-        var tokens = await tokenService.GenerateTokensAsync(user, cancellationToken);
-        return new AuthResult(true, null, tokens);
+        var (accessToken, refreshToken) = await tokenService.GenerateTokensAsync(user, cancellationToken);
+        var userDto = new UserDto(user.Id, user.Email, user.FirstName, user.LastName, request.Role);
+
+        return new AuthResult(true, null, userDto, accessToken, refreshToken);
     }
 }
