@@ -141,4 +141,19 @@ public class EventsController(ISender mediator, ICurrentUserService currentUser)
         if (!success) return NotFound(new ProblemDetails { Title = "Not Found", Detail = "Event not found or already cancelled." });
         return NoContent();
     }
+
+    /// <summary>
+    /// Retrieves a paginated list of events created ONLY by the logged-in organizer.
+    /// </summary>
+    [HttpGet("my-events")]
+    [Authorize(Roles = "Organizer")] // MODULE 10: Strict Role Authorization
+    [ProducesResponseType(typeof(PagedResponseDto<EventResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetMyEvents([FromQuery] PagedRequestDto request, CancellationToken ct)
+    {
+        var response = await mediator.Send(
+            new GetOrganizerEventsQuery(currentUser.UserId!.Value, request), ct);
+        return Ok(response);
+    }
 }
