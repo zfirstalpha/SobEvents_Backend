@@ -280,5 +280,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapHub<EventsHub>("/hubs/events").RequireCors("AngularDevClient"); // SignalR Hub Endpoint with CORS
 app.Run();
