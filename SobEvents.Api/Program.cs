@@ -21,7 +21,10 @@ using Microsoft.IdentityModel.Tokens;
 using SobEvents.Application.DTOs;
 using SobEvents.Infrastructure.Identity;
 using System.Text;
+using SobEvents.Api.Hubs;
+using SobEvents.Api.Services;
 var builder = WebApplication.CreateBuilder(args);
+
 
 //di container validation (catch captive dependencies at startup)
 builder.Host.UseDefaultServiceProvider(options =>
@@ -243,6 +246,9 @@ builder.Services.AddHostedService<TicketProcessingWorker>();
 // builder.Services.AddScoped<IEventService, EventService>();
 // builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
 // builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IEventsHubService, EventsHubService>();
+
 
 var app = builder.Build();
 

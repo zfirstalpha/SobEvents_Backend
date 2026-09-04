@@ -8,7 +8,8 @@ namespace SobEvents.Application.Handlers.Events;
 
 public class PublishEventCommandHandler(
     ISobEventsDbContext context,
-    HybridCache cache)
+    HybridCache cache,
+    IEventsHubService hubService) // Pure Application Interface!
     : IRequestHandler<PublishEventCommand, PublishEventResult>
 {
     public async Task<PublishEventResult> Handle(PublishEventCommand request, CancellationToken cancellationToken)
@@ -24,8 +25,10 @@ public class PublishEventCommandHandler(
         evt.Status = "Published";
         await context.SaveChangesAsync(cancellationToken);
 
-        // Purge cache so the newly published event appears immediately
         await cache.RemoveByTagAsync("events", cancellationToken);
+
+        // Broadcast status change in real time
+        await hubService.BroadcastEventStatusChangedAsync(evt.Id, "Published", cancellationToken);
 
         return new PublishEventResult(true, null);
     }

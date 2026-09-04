@@ -12,7 +12,7 @@ public class GetEventsPagedQueryHandler(ISobEventsDbContext context)
     public async Task<PagedResponseDto<EventResponseDto>> Handle(GetEventsPagedQuery query, CancellationToken cancellationToken)
     {
         var request = query.Request;
-        var dbQuery = context.Events.AsNoTracking();
+        var dbQuery = context.Events.AsNoTracking().Where(e=>e.Status == "Published");
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
